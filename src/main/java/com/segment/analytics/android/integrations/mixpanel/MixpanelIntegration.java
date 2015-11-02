@@ -48,8 +48,12 @@ public class MixpanelIntegration extends Integration<MixpanelAPI> {
       return new MixpanelIntegration(mixpanel, people, isPeopleEnabled, trackAllPages,
           trackCategorizedPages, trackNamedPages, token, logger, increments);
     }
+
+    @Override public String key() {
+      return MIXPANEL_KEY;
+    }
   };
-  public static final String MIXPANEL_KEY = "Mixpanel";
+  private static final String MIXPANEL_KEY = "Mixpanel";
 
   static final Map<String, String> MAPPER;
 
