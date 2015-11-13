@@ -27,6 +27,6 @@ test:
 deployment:
   snapshots:
     branch: master
-    owner: segmentio
+    owner: segment-integrations
     commands:
       - .buildscript/deploy_snapshot.sh
