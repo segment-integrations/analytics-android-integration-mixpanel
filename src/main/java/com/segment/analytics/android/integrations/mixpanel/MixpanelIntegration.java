@@ -61,7 +61,7 @@ public class MixpanelIntegration extends Integration<MixpanelAPI> {
     Map<String, String> mapper = new LinkedHashMap<>();
     mapper.put("email", "$email");
     mapper.put("phone", "$phone");
-    mapper.put("first_name", "$first_name");
+    mapper.put("firstName", "$first_name");
     mapper.put("lastName", "$last_name");
     mapper.put("$name", "$name");
     mapper.put("username", "$username");
