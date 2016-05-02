@@ -63,7 +63,7 @@ public class MixpanelIntegration extends Integration<MixpanelAPI> {
     mapper.put("phone", "$phone");
     mapper.put("first_name", "$first_name");
     mapper.put("lastName", "$last_name");
-    mapper.put("$name", "$name");
+    mapper.put("name", "$name");
     mapper.put("username", "$username");
     mapper.put("createdAt", "$created");
     MAPPER = Collections.unmodifiableMap(mapper);
