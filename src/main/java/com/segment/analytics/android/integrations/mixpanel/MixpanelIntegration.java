@@ -125,8 +125,10 @@ public class MixpanelIntegration extends Integration<MixpanelAPI> {
   @Override public void identify(IdentifyPayload identify) {
     super.identify(identify);
     String userId = identify.userId();
-    mixpanel.identify(userId);
-    logger.verbose("mixpanel.identify(%s)", userId);
+    if (userId != null) {
+      mixpanel.identify(userId);
+      logger.verbose("mixpanel.identify(%s)", userId);
+    }
     JSONObject traits = new ValueMap(transform(identify.traits(), MAPPER)).toJsonObject();
     mixpanel.registerSuperProperties(traits);
     logger.verbose("mixpanel.registerSuperProperties(%s)", traits);
