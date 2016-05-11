@@ -68,7 +68,7 @@ public class MixpanelTest {
     when(analytics.logger("Mixpanel")).thenReturn(logger);
     when(analytics.getApplication()).thenReturn(context);
 
-    integration = new MixpanelIntegration(mixpanel, null, false, true, true, true, "foo", logger,
+    integration = new MixpanelIntegration(mixpanel, null, false, true, false, false, false, "foo", logger,
         Collections.<String>emptySet());
   }
 
@@ -163,7 +163,7 @@ public class MixpanelTest {
 
   @Test public void screen() {
     integration =
-        new MixpanelIntegration(mixpanel, mixpanelPeople, true, false, false, false, "foo", logger,
+        new MixpanelIntegration(mixpanel, mixpanelPeople, true, false, false, false, false, "foo", logger,
             Collections.<String>emptySet());
 
     integration.screen(new ScreenPayloadBuilder().name("foo").build());
@@ -172,7 +172,7 @@ public class MixpanelTest {
 
   @Test public void screenAllPages() {
     integration =
-        new MixpanelIntegration(mixpanel, mixpanelPeople, true, true, false, false, "foo", logger,
+        new MixpanelIntegration(mixpanel, mixpanelPeople, true, false, true, false, false, "foo", logger,
             Collections.<String>emptySet());
 
     integration.screen(new ScreenPayloadBuilder().name("foo").build());
@@ -180,9 +180,21 @@ public class MixpanelTest {
     verifyNoMoreMixpanelInteractions();
   }
 
+  @Test public void screenConsolidatedPages() {
+    integration =
+        new MixpanelIntegration(mixpanel, mixpanelPeople, true, true, false, false, true, "foo", logger,
+            Collections.<String>emptySet());
+
+    integration.screen(new ScreenPayloadBuilder().name("foo").build());
+    Properties properties = new Properties();
+    properties.put("name", "foo");
+    verify(mixpanel).track(eq("Loaded a Screen"), jsonEq(properties.toJsonObject()));
+    verifyNoMoreMixpanelInteractions();
+  }
+
   @Test public void screenNamedPages() {
     integration =
-        new MixpanelIntegration(mixpanel, mixpanelPeople, true, false, false, true, "foo", logger,
+        new MixpanelIntegration(mixpanel, mixpanelPeople, true, false, false, false, true, "foo", logger,
             Collections.<String>emptySet());
 
     integration.screen(new ScreenPayloadBuilder().name("foo").build());
@@ -195,7 +207,7 @@ public class MixpanelTest {
 
   @Test public void screenCategorizedPages() {
     integration =
-        new MixpanelIntegration(mixpanel, mixpanelPeople, true, false, true, false, "foo", logger,
+        new MixpanelIntegration(mixpanel, mixpanelPeople, true, false, false, true, false, "foo", logger,
             Collections.<String>emptySet());
 
     integration.screen(new ScreenPayloadBuilder().category("foo").build());
@@ -214,7 +226,7 @@ public class MixpanelTest {
 
   @Test public void trackIncrement() {
     integration =
-        new MixpanelIntegration(mixpanel, mixpanelPeople, true, true, true, true, "foo", logger,
+        new MixpanelIntegration(mixpanel, mixpanelPeople, true, false, true, true, true, "foo", logger,
             Collections.singleton("baz"));
 
     integration.track(new TrackPayloadBuilder().event("baz").build());
@@ -256,7 +268,7 @@ public class MixpanelTest {
 
   @Test public void identifyWithPeople() {
     integration =
-        new MixpanelIntegration(mixpanel, mixpanelPeople, true, true, true, true, "foo", logger,
+        new MixpanelIntegration(mixpanel, mixpanelPeople, true, false, true, true, true, "foo", logger,
             Collections.<String>emptySet());
     Traits traits = createTraits("foo");
     integration.identify(new IdentifyPayloadBuilder().traits(traits).build());
@@ -269,7 +281,7 @@ public class MixpanelTest {
 
   @Test public void identifyWithSuperProperties() throws JSONException {
     integration =
-        new MixpanelIntegration(mixpanel, mixpanelPeople, true, true, true, true, "foo", logger,
+        new MixpanelIntegration(mixpanel, mixpanelPeople, true, false, true, true, true, "foo", logger,
             Collections.<String>emptySet());
 
     Traits traits = createTraits("foo")
@@ -305,7 +317,7 @@ public class MixpanelTest {
 
   @Test public void eventWithPeople() {
     integration =
-        new MixpanelIntegration(mixpanel, mixpanelPeople, true, true, true, true, "foo", logger,
+        new MixpanelIntegration(mixpanel, mixpanelPeople, true, false, true, true, true, "foo", logger,
             Collections.<String>emptySet());
     Properties properties = new Properties();
     integration.event("foo", properties);
@@ -315,7 +327,7 @@ public class MixpanelTest {
 
   @Test public void eventWithPeopleAndRevenue() {
     integration =
-        new MixpanelIntegration(mixpanel, mixpanelPeople, true, true, true, true, "foo", logger,
+        new MixpanelIntegration(mixpanel, mixpanelPeople, true, false, true, true, true, "foo", logger,
             Collections.<String>emptySet());
     Properties properties = new Properties().putRevenue(20);
     integration.event("foo", properties);
