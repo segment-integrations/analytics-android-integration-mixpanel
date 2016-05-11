@@ -33,6 +33,7 @@ import org.robolectric.annotation.Config;
 import static com.segment.analytics.Utils.createTraits;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.argThat;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.never;
@@ -250,6 +251,14 @@ public class MixpanelTest {
     Traits traits = createTraits("foo");
     integration.identify(new IdentifyPayloadBuilder().traits(traits).build());
     verify(mixpanel).identify("foo");
+    verify(mixpanel).registerSuperProperties(jsonEq(traits.toJsonObject()));
+    verifyNoMoreMixpanelInteractions();
+  }
+
+  @Test public void identifyWithoutUserId() {
+    Traits traits = createTraits();
+    integration.identify(new IdentifyPayloadBuilder().traits(traits).build());
+    verify(mixpanel, never()).identify(anyString());
     verify(mixpanel).registerSuperProperties(jsonEq(traits.toJsonObject()));
     verifyNoMoreMixpanelInteractions();
   }
