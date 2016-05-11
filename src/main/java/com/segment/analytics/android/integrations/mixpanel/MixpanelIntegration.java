@@ -125,7 +125,7 @@ public class MixpanelIntegration extends Integration<MixpanelAPI> {
   @Override public void identify(IdentifyPayload identify) {
     super.identify(identify);
     String userId = identify.userId();
-    if (userId != null && userId.length() != 0) {
+    if (userId != null) {
       mixpanel.identify(userId);
       logger.verbose("mixpanel.identify(%s)", userId);
     }
