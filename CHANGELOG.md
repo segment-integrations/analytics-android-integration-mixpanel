@@ -1,3 +1,9 @@
+Version 1.0.3 (12th May, 2016)
+===================================
+*(Supports analytics-android 4.0.+ and Mixpanel 4.7.+)*
+
+  * Add support for Segment's consolidatedPageCalls setting to send all Screen calls to Mixpanel as `Loaded a Screen`
+
 Version 1.0.2 (12th May, 2016)
 ===================================
 *(Supports analytics-android 4.0.+ and Mixpanel 4.7.+)*
