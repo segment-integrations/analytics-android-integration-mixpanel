@@ -29,9 +29,10 @@ public class MixpanelIntegration extends Integration<MixpanelAPI> {
   public static final Factory FACTORY = new Factory() {
     @Override public Integration<?> create(ValueMap settings, Analytics analytics) {
       Logger logger = analytics.logger(MIXPANEL_KEY);
+      boolean consolidatedPageCalls = settings.getBoolean("consolidatedPageCalls", true);
       boolean trackAllPages = settings.getBoolean("trackAllPages", false);
-      boolean trackCategorizedPages = settings.getBoolean("trackCategorizedPages", true);
-      boolean trackNamedPages = settings.getBoolean("trackNamedPages", true);
+      boolean trackCategorizedPages = settings.getBoolean("trackCategorizedPages", false);
+      boolean trackNamedPages = settings.getBoolean("trackNamedPages", false);
       boolean isPeopleEnabled = settings.getBoolean("people", false);
       String token = settings.getString("token");
       Set<String> increments = getStringSet(settings, "increments");
@@ -45,8 +46,18 @@ public class MixpanelIntegration extends Integration<MixpanelAPI> {
         people = null;
       }
 
-      return new MixpanelIntegration(mixpanel, people, isPeopleEnabled, trackAllPages,
-          trackCategorizedPages, trackNamedPages, token, logger, increments);
+      return new MixpanelIntegration(
+              mixpanel,
+              people,
+              isPeopleEnabled,
+              consolidatedPageCalls,
+              trackAllPages,
+              trackCategorizedPages,
+              trackNamedPages,
+              token,
+              logger,
+              increments
+      );
     }
 
     @Override public String key() {
@@ -72,6 +83,7 @@ public class MixpanelIntegration extends Integration<MixpanelAPI> {
   final MixpanelAPI mixpanel;
   final MixpanelAPI.People mixpanelPeople;
   final boolean isPeopleEnabled;
+  final boolean consolidatedPageCalls;
   final boolean trackAllPages;
   final boolean trackCategorizedPages;
   final boolean trackNamedPages;
@@ -95,12 +107,22 @@ public class MixpanelIntegration extends Integration<MixpanelAPI> {
     }
   }
 
-  public MixpanelIntegration(MixpanelAPI mixpanel, MixpanelAPI.People mixpanelPeople,
-      boolean isPeopleEnabled, boolean trackAllPages, boolean trackCategorizedPages,
-      boolean trackNamedPages, String token, Logger logger, Set<String> increments) {
+  public MixpanelIntegration(
+          MixpanelAPI mixpanel,
+          MixpanelAPI.People mixpanelPeople,
+          boolean isPeopleEnabled,
+          boolean consolidatedPageCalls,
+          boolean trackAllPages,
+          boolean trackCategorizedPages,
+          boolean trackNamedPages,
+          String token,
+          Logger logger,
+          Set<String> increments
+  ) {
     this.mixpanel = mixpanel;
     this.mixpanelPeople = mixpanelPeople;
     this.isPeopleEnabled = isPeopleEnabled;
+    this.consolidatedPageCalls = consolidatedPageCalls;
     this.trackAllPages = trackAllPages;
     this.trackCategorizedPages = trackCategorizedPages;
     this.trackNamedPages = trackNamedPages;
@@ -167,6 +189,12 @@ public class MixpanelIntegration extends Integration<MixpanelAPI> {
   }
 
   @Override public void screen(ScreenPayload screen) {
+    if (consolidatedPageCalls) {
+      Properties properties = screen.properties();
+      properties.put("name", screen.event());
+      event("Loaded a Screen", properties);
+      return;
+    }
     if (trackAllPages) {
       event(String.format(VIEWED_EVENT_FORMAT, screen.event()), screen.properties());
     } else if (trackCategorizedPages && !isNullOrEmpty(screen.category())) {
