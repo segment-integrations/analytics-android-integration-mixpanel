@@ -1,3 +1,12 @@
+Version 1.0.4 (6th July, 2016)
+===================================
+*(Supports Mixpanel 4.9.0)*
+
+  * Mixpanel version 4.9.0 fixes:
+  * Activity life cycle callbacks in old Android APIs.
+  * OutOfMemoryError for in-app and ab test.
+  * NullPointerException when accessing people profiles after resetting a Mixpanel instance.
+
 Version 1.0.3 (12th May, 2016)
 ===================================
 *(Supports analytics-android 4.0.+ and Mixpanel 4.7.+)*
