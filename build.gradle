@@ -40,7 +40,7 @@ dependencies {
 
   provided 'com.segment.analytics.android:analytics:4.0.0'
 
-  compile 'com.mixpanel.android:mixpanel-android:4.9.0@aar'
+  compile 'com.mixpanel.android:mixpanel-android:4.9.2@aar'
 
   testCompile 'junit:junit:4.12'
   testCompile('org.robolectric:robolectric:3.0') {
