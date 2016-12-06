@@ -1,8 +1,14 @@
 
+Version 1.0.6 (5th December, 2016)
+===================================
+*(Supports Mixpanel 4.9.2)*
+
+  * [Improvement](https://github.com/segment-integrations/analytics-android-integration-mixpanel/pull/12): Explicitly send distinct ID as previous ID in alias call.
+
 Version 1.0.5 (5th December, 2016)
 ===================================
 *(Supports Mixpanel 4.9.2)*
-  
+
   * Bumps Mixpanel version to 4.9.2
   * Mixpanel version 4.9.2 fixes and updates [here](https://github.com/mixpanel/mixpanel-android/releases/tag/v4.9.2)
 
