@@ -180,9 +180,8 @@ public class MixpanelIntegration extends Integration<MixpanelAPI> {
     super.alias(alias);
     String previousId = alias.previousId();
     if (previousId.equals(alias.anonymousId())) {
-      // If the previous ID is an anonymous ID, pass null to mixpanel, which has generated it's own
-      // anonymous ID
-      previousId = null;
+      // Instead of using our own anonymousId, we use Mixpanel's own generated Id.
+      previousId = mixpanel.getDistinctId();
     }
     mixpanel.alias(alias.userId(), previousId);
     logger.verbose("mixpanel.alias(%s, %s)", alias.userId(), previousId);
