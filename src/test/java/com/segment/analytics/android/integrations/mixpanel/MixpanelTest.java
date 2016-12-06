@@ -253,9 +253,12 @@ public class MixpanelTest {
   }
 
   @Test public void aliasWithoutAnonymousId() {
+    String mpDistinctId = "mpDistinctId";
+    when(mixpanel.getDistinctId()).thenReturn(mpDistinctId);
     integration.alias(new AliasPayloadBuilder().traits(new Traits() //
         .putValue("anonymousId", "qaz")).newId("qux").build());
-    verify(mixpanel).alias("qux", null);
+    verify(mixpanel).alias("qux", mpDistinctId);
+    verify(mixpanel).getDistinctId();
     verifyNoMoreMixpanelInteractions();
   }
 
