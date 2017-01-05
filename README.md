@@ -6,6 +6,34 @@ analytics-android-integration-mixpanel
 
 Mixpanel integration for [analytics-android](https://github.com/segmentio/analytics-android).
 
+## Installation
+
+To install the Segment-Mixpanel integration, simply add this line to your gradle file:
+
+```
+compile 'com.segment.analytics.android.integrations:mixpanel:+'
+```
+
+## Usage
+
+After adding the dependency, you must register the integration with our SDK.  To do this, import the Mixpanel integration:
+
+
+```
+import com.segment.analytics.android.integrations.mixpanel.MixpanelIntegration;
+
+```
+
+And add the following line:
+
+```
+analytics = new Analytics.Builder(this, "write_key")
+                .use(MixpanelIntegration.FACTORY)
+                .build();
+```
+
+Please see [our documentation](https://segment.com/docs/integrations/mixpanel/) for more information.
+
 ## License
 
 ```
