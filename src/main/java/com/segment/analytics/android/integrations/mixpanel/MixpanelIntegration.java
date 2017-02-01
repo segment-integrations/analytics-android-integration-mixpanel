@@ -5,6 +5,7 @@ import android.os.Bundle;
 import com.mixpanel.android.mpmetrics.MixpanelAPI;
 import com.segment.analytics.Analytics;
 import com.segment.analytics.Properties;
+import com.segment.analytics.Traits;
 import com.segment.analytics.ValueMap;
 import com.segment.analytics.integrations.AliasPayload;
 import com.segment.analytics.integrations.IdentifyPayload;
@@ -12,6 +13,7 @@ import com.segment.analytics.integrations.Integration;
 import com.segment.analytics.integrations.Logger;
 import com.segment.analytics.integrations.ScreenPayload;
 import com.segment.analytics.integrations.TrackPayload;
+
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashSet;
@@ -37,6 +39,10 @@ public class MixpanelIntegration extends Integration<MixpanelAPI> {
       String token = settings.getString("token");
       Set<String> increments = getStringSet(settings, "increments");
       MixpanelAPI.People people;
+      boolean setAllTraitsByDefault = settings.getBoolean("setAllTraitsByDefault", true);
+      Set<String> peopleProperties = getStringSet(settings, "peopleProperties");
+      Set<String> superProperties = getStringSet(settings, "superProperties");
+
 
       MixpanelAPI mixpanel = MixpanelAPI.getInstance(analytics.getApplication(), token);
       logger.verbose("MixpanelAPI.getInstance(context, %s);", token);
@@ -56,7 +62,10 @@ public class MixpanelIntegration extends Integration<MixpanelAPI> {
               trackNamedPages,
               token,
               logger,
-              increments
+              increments,
+              setAllTraitsByDefault,
+              peopleProperties,
+              superProperties
       );
     }
 
@@ -90,6 +99,9 @@ public class MixpanelIntegration extends Integration<MixpanelAPI> {
   final String token;
   final Logger logger;
   final Set<String> increments;
+  final boolean setAllTraitsByDefault;
+  final Set<String> peopleProperties;
+  final Set<String> superProperties;
 
   static Set<String> getStringSet(ValueMap valueMap, Object key) {
     try {
@@ -117,8 +129,10 @@ public class MixpanelIntegration extends Integration<MixpanelAPI> {
           boolean trackNamedPages,
           String token,
           Logger logger,
-          Set<String> increments
-  ) {
+          Set<String> increments,
+          boolean setAllTraitsByDefault,
+          Set<String> peopleProperties,
+          Set<String> superProperties) {
     this.mixpanel = mixpanel;
     this.mixpanelPeople = mixpanelPeople;
     this.isPeopleEnabled = isPeopleEnabled;
@@ -129,6 +143,9 @@ public class MixpanelIntegration extends Integration<MixpanelAPI> {
     this.token = token;
     this.logger = logger;
     this.increments = increments;
+    this.setAllTraitsByDefault = setAllTraitsByDefault;
+    this.peopleProperties = peopleProperties;
+    this.superProperties = superProperties;
   }
 
   @Override public void onActivityCreated(Activity activity, Bundle savedInstanceState) {
@@ -146,22 +163,69 @@ public class MixpanelIntegration extends Integration<MixpanelAPI> {
 
   @Override public void identify(IdentifyPayload identify) {
     super.identify(identify);
+
     String userId = identify.userId();
     if (userId != null) {
       mixpanel.identify(userId);
       logger.verbose("mixpanel.identify(%s)", userId);
     }
-    JSONObject traits = new ValueMap(transform(identify.traits(), MAPPER)).toJsonObject();
-    mixpanel.registerSuperProperties(traits);
-    logger.verbose("mixpanel.registerSuperProperties(%s)", traits);
 
-    if (!isPeopleEnabled) {
+    if (setAllTraitsByDefault) {
+      JSONObject traits = new ValueMap(transform(identify.traits(), MAPPER)).toJsonObject();
+      mixpanel.registerSuperProperties(traits);
+      logger.verbose("mixpanel.registerSuperProperties(%s)", traits);
+
+      if (!isPeopleEnabled) {
+        return;
+      }
+
+      mixpanelPeople.identify(userId);
+      mixpanelPeople.set(traits);
+      logger.verbose("mixpanelPeople.set(%s)", traits);
       return;
     }
-    mixpanelPeople.identify(userId);
-    logger.verbose("mixpanelPeople.identify(%s)", userId);
-    mixpanelPeople.set(traits);
-    logger.verbose("mixpanelPeople.set(%s)", traits);
+
+
+    Traits traits = identify.traits();
+    Map<String, Object> superPropertyTraits = new LinkedHashMap<>();
+    for (String property : superProperties) {
+      if (traits.containsKey(property)) {
+        superPropertyTraits.put(property, traits.get(property));
+      }
+    }
+
+    if (superPropertyTraits.size() != 0) {
+      JSONObject superPropertyMappedTraits;
+      superPropertyMappedTraits = new ValueMap(transform(superPropertyTraits, MAPPER)).toJsonObject();
+      mixpanel.registerSuperProperties(superPropertyMappedTraits);
+      logger.verbose("mixpanel.registerSuperProperties(%s)", superPropertyMappedTraits);
+
+      if (!isPeopleEnabled) {
+        return;
+      }
+
+      mixpanelPeople.identify(userId);
+      logger.verbose("mixpanelPeople.identify(%s)", userId);
+      return;
+    }
+
+
+    if (isPeopleEnabled) {
+      Map<String, Object> peoplePropertyTraits = new LinkedHashMap<>();
+      for (String property : peopleProperties) {
+        if (traits.containsKey(property)) {
+          peoplePropertyTraits.put(property, traits.get(property));
+        }
+      }
+      if (peoplePropertyTraits.size() != 0) {
+        JSONObject peoplePropertyMappedTraits = new ValueMap(transform(peoplePropertyTraits, MAPPER)).toJsonObject();
+        // identify must be called before people properties can be set
+        mixpanelPeople.identify(userId);
+        logger.verbose("mixpanelPeople.identify(%s)", userId);
+        mixpanelPeople.set(peoplePropertyMappedTraits);
+        logger.verbose("mixpanel.getPeople().set(%s)", peoplePropertyMappedTraits);
+      }
+    }
   }
 
   @Override public void flush() {
