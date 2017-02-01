@@ -196,7 +196,8 @@ public class MixpanelIntegration extends Integration<MixpanelAPI> {
 
     if (superPropertyTraits.size() != 0) {
       JSONObject superPropertyMappedTraits;
-      superPropertyMappedTraits = new ValueMap(transform(superPropertyTraits, MAPPER)).toJsonObject();
+      superPropertyMappedTraits =
+              new ValueMap(transform(superPropertyTraits, MAPPER)).toJsonObject();
       mixpanel.registerSuperProperties(superPropertyMappedTraits);
       logger.verbose("mixpanel.registerSuperProperties(%s)", superPropertyMappedTraits);
 
@@ -218,7 +219,8 @@ public class MixpanelIntegration extends Integration<MixpanelAPI> {
         }
       }
       if (peoplePropertyTraits.size() != 0) {
-        JSONObject peoplePropertyMappedTraits = new ValueMap(transform(peoplePropertyTraits, MAPPER)).toJsonObject();
+        JSONObject peoplePropertyMappedTraits =
+                new ValueMap(transform(peoplePropertyTraits, MAPPER)).toJsonObject();
         // identify must be called before people properties can be set
         mixpanelPeople.identify(userId);
         logger.verbose("mixpanelPeople.identify(%s)", userId);
