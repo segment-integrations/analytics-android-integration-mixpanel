@@ -29,7 +29,6 @@ public class MixpanelIntegration extends Integration<MixpanelAPI> {
   private static final String VIEWED_EVENT_FORMAT = "Viewed %s Screen";
   public static final Factory FACTORY = new Factory() {
     @Override public Integration<?> create(ValueMap settings, Analytics analytics) {
-      Logger logger = analytics.logger(MIXPANEL_KEY);
       boolean consolidatedPageCalls = settings.getBoolean("consolidatedPageCalls", true);
       boolean trackAllPages = settings.getBoolean("trackAllPages", false);
       boolean trackCategorizedPages = settings.getBoolean("trackCategorizedPages", false);
@@ -37,13 +36,15 @@ public class MixpanelIntegration extends Integration<MixpanelAPI> {
       boolean isPeopleEnabled = settings.getBoolean("people", false);
       String token = settings.getString("token");
       Set<String> increments = getStringSet(settings, "increments");
-      MixpanelAPI.People people;
       boolean setAllTraitsByDefault = settings.getBoolean("setAllTraitsByDefault", true);
       Set<String> peopleProperties = getStringSet(settings, "peopleProperties");
       Set<String> superProperties = getStringSet(settings, "superProperties");
 
+      Logger logger = analytics.logger(MIXPANEL_KEY);
       MixpanelAPI mixpanel = MixpanelAPI.getInstance(analytics.getApplication(), token);
       logger.verbose("MixpanelAPI.getInstance(context, %s);", token);
+
+      MixpanelAPI.People people;
       if (isPeopleEnabled) {
         people = mixpanel.getPeople();
       } else {

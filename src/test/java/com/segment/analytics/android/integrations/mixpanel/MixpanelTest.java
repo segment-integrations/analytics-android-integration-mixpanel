@@ -64,16 +64,14 @@ import static org.powermock.api.mockito.PowerMockito.when;
   @Before public void setUp() {
     initMocks(this);
     mockStatic(MixpanelAPI.class);
+    logger = Logger.with(Analytics.LogLevel.DEBUG);
     when(MixpanelAPI.getInstance(context, "foo")).thenReturn(mixpanel);
     when(mixpanel.getPeople()).thenReturn(mixpanelPeople);
-    logger = Logger.with(Analytics.LogLevel.DEBUG);
     when(analytics.logger("Mixpanel")).thenReturn(logger);
     when(analytics.getApplication()).thenReturn(context);
 
     integration =
-        new MixpanelIntegration(mixpanel, null, false, true, false, false, false, "foo", logger,
-            Collections.<String>emptySet(), true, Collections.<String>emptySet(),
-            Collections.<String>emptySet());
+        new MixpanelIntegrationBuilder().setMixpanel(mixpanel).createMixpanelIntegration();
   }
 
   @Test public void factory() {
@@ -168,20 +166,22 @@ import static org.powermock.api.mockito.PowerMockito.when;
   }
 
   @Test public void screen() {
-    integration =
-        new MixpanelIntegration(mixpanel, mixpanelPeople, true, false, false, false, false, "foo",
-            logger, Collections.<String>emptySet(), true, Collections.<String>emptySet(),
-            Collections.<String>emptySet());
+    integration = new MixpanelIntegrationBuilder().setMixpanel(mixpanel)
+        .setMixpanelPeople(mixpanelPeople)
+        .setIsPeopleEnabled(true)
+        .setConsolidatedPageCalls(false)
+        .createMixpanelIntegration();
 
     integration.screen(new ScreenPayloadBuilder().name("foo").build());
     verifyNoMoreMixpanelInteractions();
   }
 
   @Test public void screenAllPages() {
-    integration =
-        new MixpanelIntegration(mixpanel, mixpanelPeople, true, false, true, false, false, "foo",
-            logger, Collections.<String>emptySet(), true, Collections.<String>emptySet(),
-            Collections.<String>emptySet());
+    integration = new MixpanelIntegrationBuilder().setMixpanel(mixpanel)
+        .setMixpanelPeople(mixpanelPeople)
+        .setConsolidatedPageCalls(false)
+        .setTrackAllPages(true)
+        .createMixpanelIntegration();
 
     integration.screen(new ScreenPayloadBuilder().name("foo").build());
     verify(mixpanel).track(eq("Viewed foo Screen"), jsonEq(new JSONObject()));
@@ -189,10 +189,11 @@ import static org.powermock.api.mockito.PowerMockito.when;
   }
 
   @Test public void screenConsolidatedPages() {
-    integration =
-        new MixpanelIntegration(mixpanel, mixpanelPeople, true, true, false, false, true, "foo",
-            logger, Collections.<String>emptySet(), true, Collections.<String>emptySet(),
-            Collections.<String>emptySet());
+    integration = new MixpanelIntegrationBuilder().setMixpanel(mixpanel)
+        .setMixpanelPeople(mixpanelPeople)
+        .setIsPeopleEnabled(true)
+        .setTrackNamedPages(true)
+        .createMixpanelIntegration();
 
     integration.screen(new ScreenPayloadBuilder().name("foo").build());
     Properties properties = new Properties();
@@ -202,10 +203,12 @@ import static org.powermock.api.mockito.PowerMockito.when;
   }
 
   @Test public void screenNamedPages() {
-    integration =
-        new MixpanelIntegration(mixpanel, mixpanelPeople, true, false, false, false, true, "foo",
-            logger, Collections.<String>emptySet(), true, Collections.<String>emptySet(),
-            Collections.<String>emptySet());
+    integration = new MixpanelIntegrationBuilder().setMixpanel(mixpanel)
+        .setMixpanelPeople(mixpanelPeople)
+        .setIsPeopleEnabled(true)
+        .setConsolidatedPageCalls(false)
+        .setTrackNamedPages(true)
+        .createMixpanelIntegration();
 
     integration.screen(new ScreenPayloadBuilder().name("foo").build());
     verify(mixpanel).track(eq("Viewed foo Screen"), jsonEq(new JSONObject()));
@@ -216,10 +219,12 @@ import static org.powermock.api.mockito.PowerMockito.when;
   }
 
   @Test public void screenCategorizedPages() {
-    integration =
-        new MixpanelIntegration(mixpanel, mixpanelPeople, true, false, false, true, false, "foo",
-            logger, Collections.<String>emptySet(), true, Collections.<String>emptySet(),
-            Collections.<String>emptySet());
+    integration = new MixpanelIntegrationBuilder().setMixpanel(mixpanel)
+        .setMixpanelPeople(mixpanelPeople)
+        .setIsPeopleEnabled(true)
+        .setConsolidatedPageCalls(false)
+        .setTrackCategorizedPages(true)
+        .createMixpanelIntegration();
 
     integration.screen(new ScreenPayloadBuilder().category("foo").build());
     verify(mixpanel).track(eq("Viewed foo Screen"), jsonEq(new JSONObject()));
@@ -236,10 +241,15 @@ import static org.powermock.api.mockito.PowerMockito.when;
   }
 
   @Test public void trackIncrement() {
-    integration =
-        new MixpanelIntegration(mixpanel, mixpanelPeople, true, false, true, true, true, "foo",
-            logger, Collections.singleton("baz"), true, Collections.<String>emptySet(),
-            Collections.<String>emptySet());
+    integration = new MixpanelIntegrationBuilder().setMixpanel(mixpanel)
+        .setMixpanelPeople(mixpanelPeople)
+        .setIsPeopleEnabled(true)
+        .setConsolidatedPageCalls(false)
+        .setTrackAllPages(true)
+        .setTrackCategorizedPages(true)
+        .setTrackNamedPages(true)
+        .setIncrements(Collections.singleton("baz"))
+        .createMixpanelIntegration();
 
     integration.track(new TrackPayloadBuilder().event("baz").build());
 
@@ -293,10 +303,10 @@ import static org.powermock.api.mockito.PowerMockito.when;
   }
 
   @Test public void identifyWithPeople() {
-    integration =
-        new MixpanelIntegration(mixpanel, mixpanelPeople, true, false, true, true, true, "foo",
-            logger, Collections.<String>emptySet(), true, Collections.<String>emptySet(),
-            Collections.<String>emptySet());
+    integration = new MixpanelIntegrationBuilder().setMixpanel(mixpanel)
+        .setMixpanelPeople(mixpanelPeople)
+        .setIsPeopleEnabled(true)
+        .createMixpanelIntegration();
     Traits traits = createTraits("foo");
     integration.identify(new IdentifyPayloadBuilder().traits(traits).build());
     verify(mixpanel).identify("foo");
@@ -307,10 +317,10 @@ import static org.powermock.api.mockito.PowerMockito.when;
   }
 
   @Test public void identifyWithSuperProperties() throws JSONException {
-    integration =
-        new MixpanelIntegration(mixpanel, mixpanelPeople, true, false, true, true, true, "foo",
-            logger, Collections.<String>emptySet(), true, Collections.<String>emptySet(),
-            Collections.<String>emptySet());
+    integration = new MixpanelIntegrationBuilder().setMixpanel(mixpanel)
+        .setMixpanelPeople(mixpanelPeople)
+        .setIsPeopleEnabled(true)
+        .createMixpanelIntegration();
 
     Traits traits = createTraits("foo").putEmail("friends@segment.com")
         .putPhone("1-844-611-0621")
@@ -338,10 +348,12 @@ import static org.powermock.api.mockito.PowerMockito.when;
   }
 
   @Test public void identifyWithSuperPropertiesValues() throws JSONException {
-    integration =
-        new MixpanelIntegration(mixpanel, mixpanelPeople, true, false, true, true, true, "foo",
-            logger, Collections.<String>emptySet(), false, Collections.<String>emptySet(),
-            Collections.singleton("parasite"));
+    integration = new MixpanelIntegrationBuilder().setMixpanel(mixpanel)
+        .setMixpanelPeople(mixpanelPeople)
+        .setIsPeopleEnabled(true)
+        .setSuperProperties(Collections.singleton("parasite"))
+        .setSetAllTraitsByDefault(false)
+        .createMixpanelIntegration();
     Traits traits = createTraits("foo").putEmail("Raptor@segment.com")
         .putValue("parasite", "Photography Raptor");
     JSONObject expected = new JSONObject();
@@ -357,18 +369,19 @@ import static org.powermock.api.mockito.PowerMockito.when;
   }
 
   @Test public void identifyWithPeopleProperties() throws JSONException {
-    integration =
-        new MixpanelIntegration(mixpanel, mixpanelPeople, true, false, true, true, true, "foo",
-            logger, Collections.<String>emptySet(), false, Collections.singleton("parasite"),
-            Collections.<String>emptySet());
+    integration = new MixpanelIntegrationBuilder().setMixpanel(mixpanel)
+        .setMixpanelPeople(mixpanelPeople)
+        .setIsPeopleEnabled(true)
+        .setPeopleProperties(Collections.singleton("parasite"))
+        .setSetAllTraitsByDefault(false)
+        .createMixpanelIntegration();
+
     Traits traits = createTraits("foo").putEmail("Pencilvester@segment.com")
         .putValue("parasite", "Pencilvester");
     JSONObject expected = new JSONObject();
     expected.put("parasite", "Pencilvester");
 
-    integration.identify(new IdentifyPayloadBuilder(
-
-    ).traits(traits).build());
+    integration.identify(new IdentifyPayloadBuilder().traits(traits).build());
     verify(mixpanel).identify("foo");
     verify(mixpanelPeople).set(jsonEq(expected));
     verify(mixpanelPeople).identify("foo");
@@ -391,10 +404,10 @@ import static org.powermock.api.mockito.PowerMockito.when;
   }
 
   @Test public void eventWithPeople() {
-    integration =
-        new MixpanelIntegration(mixpanel, mixpanelPeople, true, false, true, true, true, "foo",
-            logger, Collections.<String>emptySet(), true, Collections.<String>emptySet(),
-            Collections.<String>emptySet());
+    integration = new MixpanelIntegrationBuilder().setMixpanel(mixpanel)
+        .setMixpanelPeople(mixpanelPeople)
+        .setIsPeopleEnabled(true)
+        .createMixpanelIntegration();
     Properties properties = new Properties();
     integration.event("foo", properties);
     verify(mixpanel).track(eq("foo"), jsonEq(properties.toJsonObject()));
@@ -402,10 +415,10 @@ import static org.powermock.api.mockito.PowerMockito.when;
   }
 
   @Test public void eventWithPeopleAndRevenue() {
-    integration =
-        new MixpanelIntegration(mixpanel, mixpanelPeople, true, false, true, true, true, "foo",
-            logger, Collections.<String>emptySet(), true, Collections.<String>emptySet(),
-            Collections.<String>emptySet());
+    integration = new MixpanelIntegrationBuilder().setMixpanel(mixpanel)
+        .setMixpanelPeople(mixpanelPeople)
+        .setIsPeopleEnabled(true)
+        .createMixpanelIntegration();
     Properties properties = new Properties().putRevenue(20);
     integration.event("foo", properties);
     verify(mixpanel).track(eq("foo"), jsonEq(properties.toJsonObject()));
