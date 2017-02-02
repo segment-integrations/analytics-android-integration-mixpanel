@@ -48,8 +48,7 @@ import static org.powermock.api.mockito.PowerMockito.when;
 @RunWith(RobolectricGradleTestRunner.class)
 @Config(constants = BuildConfig.class, sdk = 18, manifest = Config.NONE)
 @PowerMockIgnore({ "org.mockito.*", "org.robolectric.*", "android.*", "org.json.*" })
-@PrepareForTest(MixpanelAPI.class)
-public class MixpanelTest {
+@PrepareForTest(MixpanelAPI.class) public class MixpanelTest {
 
   @Rule public PowerMockRule rule = new PowerMockRule();
   @Mock MixpanelAPI mixpanel;
@@ -70,8 +69,8 @@ public class MixpanelTest {
     when(analytics.getApplication()).thenReturn(context);
 
     integration =
-        new MixpanelIntegration(mixpanel, null, false, true, false, false, false, "foo", logger,
-            Collections.<String>emptySet(), true, Collections.<String>emptySet(),
+        new MixpanelIntegration(mixpanel, null, false, true, false, false, false, "foo",
+            logger, Collections.<String>emptySet(), true, Collections.<String>emptySet(),
             Collections.<String>emptySet());
   }
 
@@ -273,6 +272,9 @@ public class MixpanelTest {
   }
 
   @Test public void identify() {
+    assertThat(integration.mixpanelPeople).isNull();
+    assertThat(integration.isPeopleEnabled).isFalse();
+
     Traits traits = createTraits("foo");
     integration.identify(new IdentifyPayloadBuilder().traits(traits).build());
     verify(mixpanel).identify("foo");

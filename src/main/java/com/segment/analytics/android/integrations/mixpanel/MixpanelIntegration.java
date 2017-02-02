@@ -138,6 +138,37 @@ public class MixpanelIntegration extends Integration<MixpanelAPI> {
     return mixpanel;
   }
 
+  void registerSuperProperties(Map<String, Object> in) {
+    if (isNullOrEmpty(in)) {
+      return;
+    }
+    JSONObject superProperties = new ValueMap(transform(in, MAPPER)).toJsonObject();
+    mixpanel.registerSuperProperties(superProperties);
+    logger.verbose("mixpanel.registerSuperProperties(%s)", superProperties);
+  }
+
+  void setPeopleProperties(Map<String, Object> in) {
+    if (isNullOrEmpty(in)) {
+      return;
+    }
+    if (!isPeopleEnabled) {
+      return;
+    }
+    JSONObject peopleProperties = new ValueMap(transform(in, MAPPER)).toJsonObject();
+    mixpanelPeople.set(peopleProperties);
+    logger.verbose("mixpanel.getPeople().set(%s)", peopleProperties);
+  }
+
+  static <T> Map<String, T> filter(Map<String, T> in, Iterable<String> filter) {
+    Map<String, T> out = new LinkedHashMap<>();
+    for (String field : filter) {
+      if (in.containsKey(field)) {
+        out.put(field, in.get(field));
+      }
+    }
+    return out;
+  }
+
   @Override public void identify(IdentifyPayload identify) {
     super.identify(identify);
 
@@ -145,64 +176,25 @@ public class MixpanelIntegration extends Integration<MixpanelAPI> {
     if (userId != null) {
       mixpanel.identify(userId);
       logger.verbose("mixpanel.identify(%s)", userId);
-    }
 
-    if (setAllTraitsByDefault) {
-      JSONObject traits = new ValueMap(transform(identify.traits(), MAPPER)).toJsonObject();
-      mixpanel.registerSuperProperties(traits);
-      logger.verbose("mixpanel.registerSuperProperties(%s)", traits);
-
-      if (!isPeopleEnabled) {
-        return;
+      if (isPeopleEnabled) {
+        mixpanelPeople.identify(userId);
+        logger.verbose("mixpanel.getPeople().identify(%s)", userId);
       }
-
-      mixpanelPeople.identify(userId);
-      mixpanelPeople.set(traits);
-      logger.verbose("mixpanelPeople.set(%s)", traits);
-      return;
     }
 
     Traits traits = identify.traits();
-    Map<String, Object> superPropertyTraits = new LinkedHashMap<>();
-    for (String property : superProperties) {
-      if (traits.containsKey(property)) {
-        superPropertyTraits.put(property, traits.get(property));
-      }
-    }
 
-    if (superPropertyTraits.size() != 0) {
-      JSONObject superPropertyMappedTraits;
-      superPropertyMappedTraits =
-          new ValueMap(transform(superPropertyTraits, MAPPER)).toJsonObject();
-      mixpanel.registerSuperProperties(superPropertyMappedTraits);
-      logger.verbose("mixpanel.registerSuperProperties(%s)", superPropertyMappedTraits);
-
-      if (!isPeopleEnabled) {
-        return;
-      }
-
-      mixpanelPeople.identify(userId);
-      logger.verbose("mixpanelPeople.identify(%s)", userId);
+    if (setAllTraitsByDefault) {
+      registerSuperProperties(traits);
+      setPeopleProperties(traits);
       return;
     }
 
-    if (isPeopleEnabled) {
-      Map<String, Object> peoplePropertyTraits = new LinkedHashMap<>();
-      for (String property : peopleProperties) {
-        if (traits.containsKey(property)) {
-          peoplePropertyTraits.put(property, traits.get(property));
-        }
-      }
-      if (peoplePropertyTraits.size() != 0) {
-        JSONObject peoplePropertyMappedTraits =
-            new ValueMap(transform(peoplePropertyTraits, MAPPER)).toJsonObject();
-        // identify must be called before people properties can be set
-        mixpanelPeople.identify(userId);
-        logger.verbose("mixpanelPeople.identify(%s)", userId);
-        mixpanelPeople.set(peoplePropertyMappedTraits);
-        logger.verbose("mixpanel.getPeople().set(%s)", peoplePropertyMappedTraits);
-      }
-    }
+    Map<String, Object> superPropertyTraits = filter(traits, superProperties);
+    registerSuperProperties(superPropertyTraits);
+    Map<String, Object> peoplePropertyTraits = filter(traits, peopleProperties);
+    setPeopleProperties(peoplePropertyTraits);
   }
 
   @Override public void flush() {
