@@ -15,6 +15,7 @@ import com.segment.analytics.test.ScreenPayloadBuilder;
 import com.segment.analytics.test.TrackPayloadBuilder;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Map;
 import org.hamcrest.Description;
 import org.hamcrest.TypeSafeMatcher;
 import org.json.JSONException;
@@ -31,6 +32,7 @@ import org.robolectric.RobolectricGradleTestRunner;
 import org.robolectric.annotation.Config;
 
 import static com.segment.analytics.Utils.createTraits;
+import static com.segment.analytics.android.integrations.mixpanel.MixpanelIntegration.filter;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyString;
@@ -69,8 +71,8 @@ import static org.powermock.api.mockito.PowerMockito.when;
     when(analytics.getApplication()).thenReturn(context);
 
     integration =
-        new MixpanelIntegration(mixpanel, null, false, true, false, false, false, "foo",
-            logger, Collections.<String>emptySet(), true, Collections.<String>emptySet(),
+        new MixpanelIntegration(mixpanel, null, false, true, false, false, false, "foo", logger,
+            Collections.<String>emptySet(), true, Collections.<String>emptySet(),
             Collections.<String>emptySet());
   }
 
@@ -371,6 +373,14 @@ import static org.powermock.api.mockito.PowerMockito.when;
     verify(mixpanelPeople).set(jsonEq(expected));
     verify(mixpanelPeople).identify("foo");
     verifyNoMoreMixpanelInteractions();
+  }
+
+  @Test public void testFilter() {
+    Map<String, String> map = Collections.singletonMap("foo", "bar");
+    assertThat(filter(map, Collections.<String>emptySet())).isEqualTo(Collections.emptyMap());
+    assertThat(filter(map, Collections.singletonList("bar"))).isEqualTo(Collections.emptyMap());
+    assertThat(filter(map, Collections.singletonList("foo"))).isEqualTo(
+        Collections.singletonMap("foo", "bar"));
   }
 
   @Test public void event() {
