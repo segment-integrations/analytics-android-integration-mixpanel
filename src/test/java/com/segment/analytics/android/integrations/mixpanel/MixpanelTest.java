@@ -69,8 +69,10 @@ public class MixpanelTest {
     when(analytics.logger("Mixpanel")).thenReturn(logger);
     when(analytics.getApplication()).thenReturn(context);
 
-    integration = new MixpanelIntegration(mixpanel, null, false, true, false, false, false, "foo", logger,
-        Collections.<String>emptySet(), true, Collections.<String>emptySet(), Collections.<String>emptySet());
+    integration =
+        new MixpanelIntegration(mixpanel, null, false, true, false, false, false, "foo", logger,
+            Collections.<String>emptySet(), true, Collections.<String>emptySet(),
+            Collections.<String>emptySet());
   }
 
   @Test public void factory() {
@@ -166,8 +168,9 @@ public class MixpanelTest {
 
   @Test public void screen() {
     integration =
-        new MixpanelIntegration(mixpanel, mixpanelPeople, true, false, false, false, false, "foo", logger,
-            Collections.<String>emptySet(), true, Collections.<String>emptySet(), Collections.<String>emptySet());
+        new MixpanelIntegration(mixpanel, mixpanelPeople, true, false, false, false, false, "foo",
+            logger, Collections.<String>emptySet(), true, Collections.<String>emptySet(),
+            Collections.<String>emptySet());
 
     integration.screen(new ScreenPayloadBuilder().name("foo").build());
     verifyNoMoreMixpanelInteractions();
@@ -175,8 +178,9 @@ public class MixpanelTest {
 
   @Test public void screenAllPages() {
     integration =
-        new MixpanelIntegration(mixpanel, mixpanelPeople, true, false, true, false, false, "foo", logger,
-            Collections.<String>emptySet(), true, Collections.<String>emptySet(), Collections.<String>emptySet());
+        new MixpanelIntegration(mixpanel, mixpanelPeople, true, false, true, false, false, "foo",
+            logger, Collections.<String>emptySet(), true, Collections.<String>emptySet(),
+            Collections.<String>emptySet());
 
     integration.screen(new ScreenPayloadBuilder().name("foo").build());
     verify(mixpanel).track(eq("Viewed foo Screen"), jsonEq(new JSONObject()));
@@ -185,8 +189,9 @@ public class MixpanelTest {
 
   @Test public void screenConsolidatedPages() {
     integration =
-        new MixpanelIntegration(mixpanel, mixpanelPeople, true, true, false, false, true, "foo", logger,
-            Collections.<String>emptySet(), true, Collections.<String>emptySet(), Collections.<String>emptySet());
+        new MixpanelIntegration(mixpanel, mixpanelPeople, true, true, false, false, true, "foo",
+            logger, Collections.<String>emptySet(), true, Collections.<String>emptySet(),
+            Collections.<String>emptySet());
 
     integration.screen(new ScreenPayloadBuilder().name("foo").build());
     Properties properties = new Properties();
@@ -197,8 +202,9 @@ public class MixpanelTest {
 
   @Test public void screenNamedPages() {
     integration =
-        new MixpanelIntegration(mixpanel, mixpanelPeople, true, false, false, false, true, "foo", logger,
-            Collections.<String>emptySet(), true, Collections.<String>emptySet(), Collections.<String>emptySet());
+        new MixpanelIntegration(mixpanel, mixpanelPeople, true, false, false, false, true, "foo",
+            logger, Collections.<String>emptySet(), true, Collections.<String>emptySet(),
+            Collections.<String>emptySet());
 
     integration.screen(new ScreenPayloadBuilder().name("foo").build());
     verify(mixpanel).track(eq("Viewed foo Screen"), jsonEq(new JSONObject()));
@@ -210,8 +216,9 @@ public class MixpanelTest {
 
   @Test public void screenCategorizedPages() {
     integration =
-        new MixpanelIntegration(mixpanel, mixpanelPeople, true, false, false, true, false, "foo", logger,
-            Collections.<String>emptySet(), true, Collections.<String>emptySet(), Collections.<String>emptySet());
+        new MixpanelIntegration(mixpanel, mixpanelPeople, true, false, false, true, false, "foo",
+            logger, Collections.<String>emptySet(), true, Collections.<String>emptySet(),
+            Collections.<String>emptySet());
 
     integration.screen(new ScreenPayloadBuilder().category("foo").build());
     verify(mixpanel).track(eq("Viewed foo Screen"), jsonEq(new JSONObject()));
@@ -229,8 +236,9 @@ public class MixpanelTest {
 
   @Test public void trackIncrement() {
     integration =
-        new MixpanelIntegration(mixpanel, mixpanelPeople, true, false, true, true, true, "foo", logger,
-            Collections.singleton("baz"), true, Collections.<String>emptySet(), Collections.<String>emptySet());
+        new MixpanelIntegration(mixpanel, mixpanelPeople, true, false, true, true, true, "foo",
+            logger, Collections.singleton("baz"), true, Collections.<String>emptySet(),
+            Collections.<String>emptySet());
 
     integration.track(new TrackPayloadBuilder().event("baz").build());
 
@@ -282,8 +290,9 @@ public class MixpanelTest {
 
   @Test public void identifyWithPeople() {
     integration =
-        new MixpanelIntegration(mixpanel, mixpanelPeople, true, false, true, true, true, "foo", logger,
-            Collections.<String>emptySet(), true, Collections.<String>emptySet(), Collections.<String>emptySet());
+        new MixpanelIntegration(mixpanel, mixpanelPeople, true, false, true, true, true, "foo",
+            logger, Collections.<String>emptySet(), true, Collections.<String>emptySet(),
+            Collections.<String>emptySet());
     Traits traits = createTraits("foo");
     integration.identify(new IdentifyPayloadBuilder().traits(traits).build());
     verify(mixpanel).identify("foo");
@@ -295,11 +304,11 @@ public class MixpanelTest {
 
   @Test public void identifyWithSuperProperties() throws JSONException {
     integration =
-        new MixpanelIntegration(mixpanel, mixpanelPeople, true, false, true, true, true, "foo", logger,
-            Collections.<String>emptySet(), true, Collections.<String>emptySet(), Collections.<String>emptySet());
+        new MixpanelIntegration(mixpanel, mixpanelPeople, true, false, true, true, true, "foo",
+            logger, Collections.<String>emptySet(), true, Collections.<String>emptySet(),
+            Collections.<String>emptySet());
 
-    Traits traits = createTraits("foo")
-        .putEmail("friends@segment.com")
+    Traits traits = createTraits("foo").putEmail("friends@segment.com")
         .putPhone("1-844-611-0621")
         .putCreatedAt("15th Feb, 2015")
         .putUsername("segmentio");
@@ -323,13 +332,14 @@ public class MixpanelTest {
     verify(mixpanelPeople).set(jsonEq(expected));
     verifyNoMoreMixpanelInteractions();
   }
+
   @Test public void identifyWithSuperPropertiesValues() throws JSONException {
     integration =
-            new MixpanelIntegration(mixpanel, mixpanelPeople, true, false, true, true, true, "foo", logger,
-                    Collections.<String>emptySet(), false, Collections.<String>emptySet(), Collections.singleton("parasite"));
-    Traits traits = createTraits("foo")
-            .putEmail("Raptor@segment.com")
-            .putValue("parasite", "Photography Raptor");
+        new MixpanelIntegration(mixpanel, mixpanelPeople, true, false, true, true, true, "foo",
+            logger, Collections.<String>emptySet(), false, Collections.<String>emptySet(),
+            Collections.singleton("parasite"));
+    Traits traits = createTraits("foo").putEmail("Raptor@segment.com")
+        .putValue("parasite", "Photography Raptor");
     JSONObject expected = new JSONObject();
     expected.put("parasite", "Photography Raptor");
 
@@ -344,11 +354,11 @@ public class MixpanelTest {
 
   @Test public void identifyWithPeopleProperties() throws JSONException {
     integration =
-            new MixpanelIntegration(mixpanel, mixpanelPeople, true, false, true, true, true, "foo", logger,
-                    Collections.<String>emptySet(), false, Collections.singleton("parasite"), Collections.<String>emptySet());
-    Traits traits = createTraits("foo")
-            .putEmail("Pencilvester@segment.com")
-            .putValue("parasite", "Pencilvester");
+        new MixpanelIntegration(mixpanel, mixpanelPeople, true, false, true, true, true, "foo",
+            logger, Collections.<String>emptySet(), false, Collections.singleton("parasite"),
+            Collections.<String>emptySet());
+    Traits traits = createTraits("foo").putEmail("Pencilvester@segment.com")
+        .putValue("parasite", "Pencilvester");
     JSONObject expected = new JSONObject();
     expected.put("parasite", "Pencilvester");
 
@@ -370,8 +380,9 @@ public class MixpanelTest {
 
   @Test public void eventWithPeople() {
     integration =
-        new MixpanelIntegration(mixpanel, mixpanelPeople, true, false, true, true, true, "foo", logger,
-            Collections.<String>emptySet(), true, Collections.<String>emptySet(), Collections.<String>emptySet());
+        new MixpanelIntegration(mixpanel, mixpanelPeople, true, false, true, true, true, "foo",
+            logger, Collections.<String>emptySet(), true, Collections.<String>emptySet(),
+            Collections.<String>emptySet());
     Properties properties = new Properties();
     integration.event("foo", properties);
     verify(mixpanel).track(eq("foo"), jsonEq(properties.toJsonObject()));
@@ -380,8 +391,9 @@ public class MixpanelTest {
 
   @Test public void eventWithPeopleAndRevenue() {
     integration =
-        new MixpanelIntegration(mixpanel, mixpanelPeople, true, false, true, true, true, "foo", logger,
-            Collections.<String>emptySet(), true, Collections.<String>emptySet(), Collections.<String>emptySet());
+        new MixpanelIntegration(mixpanel, mixpanelPeople, true, false, true, true, true, "foo",
+            logger, Collections.<String>emptySet(), true, Collections.<String>emptySet(),
+            Collections.<String>emptySet());
     Properties properties = new Properties().putRevenue(20);
     integration.event("foo", properties);
     verify(mixpanel).track(eq("foo"), jsonEq(properties.toJsonObject()));
