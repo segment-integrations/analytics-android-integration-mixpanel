@@ -15,6 +15,7 @@ import com.segment.analytics.test.ScreenPayloadBuilder;
 import com.segment.analytics.test.TrackPayloadBuilder;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Map;
 import org.hamcrest.Description;
 import org.hamcrest.TypeSafeMatcher;
 import org.json.JSONException;
@@ -31,6 +32,7 @@ import org.robolectric.RobolectricGradleTestRunner;
 import org.robolectric.annotation.Config;
 
 import static com.segment.analytics.Utils.createTraits;
+import static com.segment.analytics.android.integrations.mixpanel.MixpanelIntegration.filter;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyString;
@@ -48,8 +50,7 @@ import static org.powermock.api.mockito.PowerMockito.when;
 @RunWith(RobolectricGradleTestRunner.class)
 @Config(constants = BuildConfig.class, sdk = 18, manifest = Config.NONE)
 @PowerMockIgnore({ "org.mockito.*", "org.robolectric.*", "android.*", "org.json.*" })
-@PrepareForTest(MixpanelAPI.class)
-public class MixpanelTest {
+@PrepareForTest(MixpanelAPI.class) public class MixpanelTest {
 
   @Rule public PowerMockRule rule = new PowerMockRule();
   @Mock MixpanelAPI mixpanel;
@@ -63,21 +64,22 @@ public class MixpanelTest {
   @Before public void setUp() {
     initMocks(this);
     mockStatic(MixpanelAPI.class);
+    logger = Logger.with(Analytics.LogLevel.DEBUG);
     when(MixpanelAPI.getInstance(context, "foo")).thenReturn(mixpanel);
     when(mixpanel.getPeople()).thenReturn(mixpanelPeople);
-    logger = Logger.with(Analytics.LogLevel.DEBUG);
     when(analytics.logger("Mixpanel")).thenReturn(logger);
     when(analytics.getApplication()).thenReturn(context);
 
-    integration = new MixpanelIntegration(mixpanel, null, false, true, false, false, false, "foo", logger,
-        Collections.<String>emptySet());
+    integration =
+        new MixpanelIntegrationBuilder().setMixpanel(mixpanel).createMixpanelIntegration();
   }
 
   @Test public void factory() {
     ValueMap settings = new ValueMap().putValue("token", "foo")
         .putValue("trackAllPages", true)
         .putValue("trackCategorizedPages", false)
-        .putValue("trackNamedPages", true);
+        .putValue("trackNamedPages", true)
+        .putValue("setAllTraitsByDefault", true);
 
     MixpanelIntegration integration =
         (MixpanelIntegration) MixpanelIntegration.FACTORY.create(settings, analytics);
@@ -91,6 +93,7 @@ public class MixpanelTest {
     assertThat(integration.trackCategorizedPages).isFalse();
     assertThat(integration.trackNamedPages).isTrue();
     assertThat(integration.increments).isNotNull().isEmpty();
+    assertThat(integration.setAllTraitsByDefault).isTrue();
   }
 
   @Test public void initializeWithIncrementsAndPeople() throws IllegalStateException {
@@ -163,18 +166,22 @@ public class MixpanelTest {
   }
 
   @Test public void screen() {
-    integration =
-        new MixpanelIntegration(mixpanel, mixpanelPeople, true, false, false, false, false, "foo", logger,
-            Collections.<String>emptySet());
+    integration = new MixpanelIntegrationBuilder().setMixpanel(mixpanel)
+        .setMixpanelPeople(mixpanelPeople)
+        .setIsPeopleEnabled(true)
+        .setConsolidatedPageCalls(false)
+        .createMixpanelIntegration();
 
     integration.screen(new ScreenPayloadBuilder().name("foo").build());
     verifyNoMoreMixpanelInteractions();
   }
 
   @Test public void screenAllPages() {
-    integration =
-        new MixpanelIntegration(mixpanel, mixpanelPeople, true, false, true, false, false, "foo", logger,
-            Collections.<String>emptySet());
+    integration = new MixpanelIntegrationBuilder().setMixpanel(mixpanel)
+        .setMixpanelPeople(mixpanelPeople)
+        .setConsolidatedPageCalls(false)
+        .setTrackAllPages(true)
+        .createMixpanelIntegration();
 
     integration.screen(new ScreenPayloadBuilder().name("foo").build());
     verify(mixpanel).track(eq("Viewed foo Screen"), jsonEq(new JSONObject()));
@@ -182,9 +189,11 @@ public class MixpanelTest {
   }
 
   @Test public void screenConsolidatedPages() {
-    integration =
-        new MixpanelIntegration(mixpanel, mixpanelPeople, true, true, false, false, true, "foo", logger,
-            Collections.<String>emptySet());
+    integration = new MixpanelIntegrationBuilder().setMixpanel(mixpanel)
+        .setMixpanelPeople(mixpanelPeople)
+        .setIsPeopleEnabled(true)
+        .setTrackNamedPages(true)
+        .createMixpanelIntegration();
 
     integration.screen(new ScreenPayloadBuilder().name("foo").build());
     Properties properties = new Properties();
@@ -194,9 +203,12 @@ public class MixpanelTest {
   }
 
   @Test public void screenNamedPages() {
-    integration =
-        new MixpanelIntegration(mixpanel, mixpanelPeople, true, false, false, false, true, "foo", logger,
-            Collections.<String>emptySet());
+    integration = new MixpanelIntegrationBuilder().setMixpanel(mixpanel)
+        .setMixpanelPeople(mixpanelPeople)
+        .setIsPeopleEnabled(true)
+        .setConsolidatedPageCalls(false)
+        .setTrackNamedPages(true)
+        .createMixpanelIntegration();
 
     integration.screen(new ScreenPayloadBuilder().name("foo").build());
     verify(mixpanel).track(eq("Viewed foo Screen"), jsonEq(new JSONObject()));
@@ -207,9 +219,12 @@ public class MixpanelTest {
   }
 
   @Test public void screenCategorizedPages() {
-    integration =
-        new MixpanelIntegration(mixpanel, mixpanelPeople, true, false, false, true, false, "foo", logger,
-            Collections.<String>emptySet());
+    integration = new MixpanelIntegrationBuilder().setMixpanel(mixpanel)
+        .setMixpanelPeople(mixpanelPeople)
+        .setIsPeopleEnabled(true)
+        .setConsolidatedPageCalls(false)
+        .setTrackCategorizedPages(true)
+        .createMixpanelIntegration();
 
     integration.screen(new ScreenPayloadBuilder().category("foo").build());
     verify(mixpanel).track(eq("Viewed foo Screen"), jsonEq(new JSONObject()));
@@ -226,9 +241,15 @@ public class MixpanelTest {
   }
 
   @Test public void trackIncrement() {
-    integration =
-        new MixpanelIntegration(mixpanel, mixpanelPeople, true, false, true, true, true, "foo", logger,
-            Collections.singleton("baz"));
+    integration = new MixpanelIntegrationBuilder().setMixpanel(mixpanel)
+        .setMixpanelPeople(mixpanelPeople)
+        .setIsPeopleEnabled(true)
+        .setConsolidatedPageCalls(false)
+        .setTrackAllPages(true)
+        .setTrackCategorizedPages(true)
+        .setTrackNamedPages(true)
+        .setIncrements(Collections.singleton("baz"))
+        .createMixpanelIntegration();
 
     integration.track(new TrackPayloadBuilder().event("baz").build());
 
@@ -263,6 +284,9 @@ public class MixpanelTest {
   }
 
   @Test public void identify() {
+    assertThat(integration.mixpanelPeople).isNull();
+    assertThat(integration.isPeopleEnabled).isFalse();
+
     Traits traits = createTraits("foo");
     integration.identify(new IdentifyPayloadBuilder().traits(traits).build());
     verify(mixpanel).identify("foo");
@@ -279,9 +303,10 @@ public class MixpanelTest {
   }
 
   @Test public void identifyWithPeople() {
-    integration =
-        new MixpanelIntegration(mixpanel, mixpanelPeople, true, false, true, true, true, "foo", logger,
-            Collections.<String>emptySet());
+    integration = new MixpanelIntegrationBuilder().setMixpanel(mixpanel)
+        .setMixpanelPeople(mixpanelPeople)
+        .setIsPeopleEnabled(true)
+        .createMixpanelIntegration();
     Traits traits = createTraits("foo");
     integration.identify(new IdentifyPayloadBuilder().traits(traits).build());
     verify(mixpanel).identify("foo");
@@ -292,12 +317,12 @@ public class MixpanelTest {
   }
 
   @Test public void identifyWithSuperProperties() throws JSONException {
-    integration =
-        new MixpanelIntegration(mixpanel, mixpanelPeople, true, false, true, true, true, "foo", logger,
-            Collections.<String>emptySet());
+    integration = new MixpanelIntegrationBuilder().setMixpanel(mixpanel)
+        .setMixpanelPeople(mixpanelPeople)
+        .setIsPeopleEnabled(true)
+        .createMixpanelIntegration();
 
-    Traits traits = createTraits("foo")
-        .putEmail("friends@segment.com")
+    Traits traits = createTraits("foo").putEmail("friends@segment.com")
         .putPhone("1-844-611-0621")
         .putCreatedAt("15th Feb, 2015")
         .putUsername("segmentio");
@@ -312,12 +337,63 @@ public class MixpanelTest {
     expected.put("$username", traits.username());
     expected.put("$created", traits.createdAt());
 
-    integration.identify(new IdentifyPayloadBuilder().traits(traits).build());
+    integration.identify(new IdentifyPayloadBuilder(
+
+    ).traits(traits).build());
     verify(mixpanel).identify("foo");
     verify(mixpanel).registerSuperProperties(jsonEq(expected));
     verify(mixpanelPeople).identify("foo");
     verify(mixpanelPeople).set(jsonEq(expected));
     verifyNoMoreMixpanelInteractions();
+  }
+
+  @Test public void identifyWithSuperPropertiesValues() throws JSONException {
+    integration = new MixpanelIntegrationBuilder().setMixpanel(mixpanel)
+        .setMixpanelPeople(mixpanelPeople)
+        .setIsPeopleEnabled(true)
+        .setSuperProperties(Collections.singleton("parasite"))
+        .setSetAllTraitsByDefault(false)
+        .createMixpanelIntegration();
+    Traits traits = createTraits("foo").putEmail("Raptor@segment.com")
+        .putValue("parasite", "Photography Raptor");
+    JSONObject expected = new JSONObject();
+    expected.put("parasite", "Photography Raptor");
+
+    integration.identify(new IdentifyPayloadBuilder(
+
+    ).traits(traits).build());
+    verify(mixpanel).identify("foo");
+    verify(mixpanel).registerSuperProperties(jsonEq(expected));
+    verify(mixpanelPeople).identify("foo");
+    verifyNoMoreMixpanelInteractions();
+  }
+
+  @Test public void identifyWithPeopleProperties() throws JSONException {
+    integration = new MixpanelIntegrationBuilder().setMixpanel(mixpanel)
+        .setMixpanelPeople(mixpanelPeople)
+        .setIsPeopleEnabled(true)
+        .setPeopleProperties(Collections.singleton("parasite"))
+        .setSetAllTraitsByDefault(false)
+        .createMixpanelIntegration();
+
+    Traits traits = createTraits("foo").putEmail("Pencilvester@segment.com")
+        .putValue("parasite", "Pencilvester");
+    JSONObject expected = new JSONObject();
+    expected.put("parasite", "Pencilvester");
+
+    integration.identify(new IdentifyPayloadBuilder().traits(traits).build());
+    verify(mixpanel).identify("foo");
+    verify(mixpanelPeople).set(jsonEq(expected));
+    verify(mixpanelPeople).identify("foo");
+    verifyNoMoreMixpanelInteractions();
+  }
+
+  @Test public void testFilter() {
+    Map<String, String> map = Collections.singletonMap("foo", "bar");
+    assertThat(filter(map, Collections.<String>emptySet())).isEqualTo(Collections.emptyMap());
+    assertThat(filter(map, Collections.singletonList("bar"))).isEqualTo(Collections.emptyMap());
+    assertThat(filter(map, Collections.singletonList("foo"))).isEqualTo(
+        Collections.singletonMap("foo", "bar"));
   }
 
   @Test public void event() {
@@ -328,9 +404,10 @@ public class MixpanelTest {
   }
 
   @Test public void eventWithPeople() {
-    integration =
-        new MixpanelIntegration(mixpanel, mixpanelPeople, true, false, true, true, true, "foo", logger,
-            Collections.<String>emptySet());
+    integration = new MixpanelIntegrationBuilder().setMixpanel(mixpanel)
+        .setMixpanelPeople(mixpanelPeople)
+        .setIsPeopleEnabled(true)
+        .createMixpanelIntegration();
     Properties properties = new Properties();
     integration.event("foo", properties);
     verify(mixpanel).track(eq("foo"), jsonEq(properties.toJsonObject()));
@@ -338,9 +415,10 @@ public class MixpanelTest {
   }
 
   @Test public void eventWithPeopleAndRevenue() {
-    integration =
-        new MixpanelIntegration(mixpanel, mixpanelPeople, true, false, true, true, true, "foo", logger,
-            Collections.<String>emptySet());
+    integration = new MixpanelIntegrationBuilder().setMixpanel(mixpanel)
+        .setMixpanelPeople(mixpanelPeople)
+        .setIsPeopleEnabled(true)
+        .createMixpanelIntegration();
     Properties properties = new Properties().putRevenue(20);
     integration.event("foo", properties);
     verify(mixpanel).track(eq("foo"), jsonEq(properties.toJsonObject()));
