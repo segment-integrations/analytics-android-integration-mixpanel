@@ -1,3 +1,10 @@
+Version 1.0.7 (2nd February, 2017)
+===================================
+*(Supports Mixpanel 4.9.2)*
+
+  * [Bug](https://github.com/segment-integrations/analytics-android-integration-mixpanel/pull/14): While `setAllTraitsByDefault` is false, this pulls in `peopleProperties` and/or `superProperties` when configured in the integration panel.
+  * Refactor tests.
+
 
 Version 1.0.6 (5th December, 2016)
 ===================================
