@@ -1,3 +1,9 @@
+Version 1.0.8 (2nd February, 2017)
+===================================
+*(Supports Mixpanel 4.9.8)*
+
+  * Fix: Don't mutate properties object in payload.
+
 Version 1.0.7 (2nd February, 2017)
 ===================================
 *(Supports Mixpanel 4.9.2)*
