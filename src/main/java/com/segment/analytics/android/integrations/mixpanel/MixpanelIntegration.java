@@ -27,42 +27,56 @@ import static com.segment.analytics.internal.Utils.transform;
 
 public class MixpanelIntegration extends Integration<MixpanelAPI> {
   private static final String VIEWED_EVENT_FORMAT = "Viewed %s Screen";
-  public static final Factory FACTORY = new Factory() {
-    @Override public Integration<?> create(ValueMap settings, Analytics analytics) {
-      boolean consolidatedPageCalls = settings.getBoolean("consolidatedPageCalls", true);
-      boolean trackAllPages = settings.getBoolean("trackAllPages", false);
-      boolean trackCategorizedPages = settings.getBoolean("trackCategorizedPages", false);
-      boolean trackNamedPages = settings.getBoolean("trackNamedPages", false);
-      boolean isPeopleEnabled = settings.getBoolean("people", false);
-      String token = settings.getString("token");
-      Set<String> increments = getStringSet(settings, "increments");
-      boolean setAllTraitsByDefault = settings.getBoolean("setAllTraitsByDefault", true);
-      Set<String> peopleProperties = getStringSet(settings, "peopleProperties");
-      Set<String> superProperties = getStringSet(settings, "superProperties");
+  public static final Factory FACTORY =
+      new Factory() {
+        @Override
+        public Integration<?> create(ValueMap settings, Analytics analytics) {
+          boolean consolidatedPageCalls = settings.getBoolean("consolidatedPageCalls", true);
+          boolean trackAllPages = settings.getBoolean("trackAllPages", false);
+          boolean trackCategorizedPages = settings.getBoolean("trackCategorizedPages", false);
+          boolean trackNamedPages = settings.getBoolean("trackNamedPages", false);
+          boolean isPeopleEnabled = settings.getBoolean("people", false);
+          String token = settings.getString("token");
+          Set<String> increments = getStringSet(settings, "increments");
+          boolean setAllTraitsByDefault = settings.getBoolean("setAllTraitsByDefault", true);
+          Set<String> peopleProperties = getStringSet(settings, "peopleProperties");
+          Set<String> superProperties = getStringSet(settings, "superProperties");
 
-      Logger logger = analytics.logger(MIXPANEL_KEY);
-      MixpanelAPI mixpanel = MixpanelAPI.getInstance(analytics.getApplication(), token);
-      logger.verbose("MixpanelAPI.getInstance(context, %s);", token);
+          Logger logger = analytics.logger(MIXPANEL_KEY);
+          MixpanelAPI mixpanel = MixpanelAPI.getInstance(analytics.getApplication(), token);
+          logger.verbose("MixpanelAPI.getInstance(context, %s);", token);
 
-      MixpanelAPI.People people;
-      if (isPeopleEnabled) {
-        people = mixpanel.getPeople();
-      } else {
-        people = null;
-      }
+          MixpanelAPI.People people;
+          if (isPeopleEnabled) {
+            people = mixpanel.getPeople();
+          } else {
+            people = null;
+          }
 
-      return new MixpanelIntegration(mixpanel, people, isPeopleEnabled, consolidatedPageCalls,
-          trackAllPages, trackCategorizedPages, trackNamedPages, token, logger, increments,
-          setAllTraitsByDefault, peopleProperties, superProperties);
-    }
+          return new MixpanelIntegration(
+              mixpanel,
+              people,
+              isPeopleEnabled,
+              consolidatedPageCalls,
+              trackAllPages,
+              trackCategorizedPages,
+              trackNamedPages,
+              token,
+              logger,
+              increments,
+              setAllTraitsByDefault,
+              peopleProperties,
+              superProperties);
+        }
 
-    @Override public String key() {
-      return MIXPANEL_KEY;
-    }
-  };
+        @Override
+        public String key() {
+          return MIXPANEL_KEY;
+        }
+      };
   private static final String MIXPANEL_KEY = "Mixpanel";
 
-  static final Map<String, String> MAPPER;
+  private static final Map<String, String> MAPPER;
 
   static {
     Map<String, String> mapper = new LinkedHashMap<>();
@@ -76,22 +90,23 @@ public class MixpanelIntegration extends Integration<MixpanelAPI> {
     MAPPER = Collections.unmodifiableMap(mapper);
   }
 
-  final MixpanelAPI mixpanel;
+  private final MixpanelAPI mixpanel;
   final MixpanelAPI.People mixpanelPeople;
   final boolean isPeopleEnabled;
-  final boolean consolidatedPageCalls;
+  private final boolean consolidatedPageCalls;
   final boolean trackAllPages;
   final boolean trackCategorizedPages;
   final boolean trackNamedPages;
   final String token;
-  final Logger logger;
+  private final Logger logger;
   final Set<String> increments;
   final boolean setAllTraitsByDefault;
-  final Set<String> peopleProperties;
-  final Set<String> superProperties;
+  private final Set<String> peopleProperties;
+  private final Set<String> superProperties;
 
-  static Set<String> getStringSet(ValueMap valueMap, Object key) {
+  private static Set<String> getStringSet(ValueMap valueMap, String key) {
     try {
+      //noinspection unchecked
       List<Object> incrementEvents = (List<Object>) valueMap.get(key);
       if (incrementEvents == null || incrementEvents.size() == 0) {
         return Collections.emptySet();
@@ -106,10 +121,19 @@ public class MixpanelIntegration extends Integration<MixpanelAPI> {
     }
   }
 
-  public MixpanelIntegration(MixpanelAPI mixpanel, MixpanelAPI.People mixpanelPeople,
-      boolean isPeopleEnabled, boolean consolidatedPageCalls, boolean trackAllPages,
-      boolean trackCategorizedPages, boolean trackNamedPages, String token, Logger logger,
-      Set<String> increments, boolean setAllTraitsByDefault, Set<String> peopleProperties,
+  public MixpanelIntegration(
+      MixpanelAPI mixpanel,
+      MixpanelAPI.People mixpanelPeople,
+      boolean isPeopleEnabled,
+      boolean consolidatedPageCalls,
+      boolean trackAllPages,
+      boolean trackCategorizedPages,
+      boolean trackNamedPages,
+      String token,
+      Logger logger,
+      Set<String> increments,
+      boolean setAllTraitsByDefault,
+      Set<String> peopleProperties,
       Set<String> superProperties) {
     this.mixpanel = mixpanel;
     this.mixpanelPeople = mixpanelPeople;
@@ -126,7 +150,8 @@ public class MixpanelIntegration extends Integration<MixpanelAPI> {
     this.superProperties = superProperties;
   }
 
-  @Override public void onActivityCreated(Activity activity, Bundle savedInstanceState) {
+  @Override
+  public void onActivityCreated(Activity activity, Bundle savedInstanceState) {
     super.onActivityCreated(activity, savedInstanceState);
 
     // This is needed to trigger a call to #checkIntentForInboundAppLink.
@@ -135,11 +160,12 @@ public class MixpanelIntegration extends Integration<MixpanelAPI> {
     MixpanelAPI.getInstance(activity, token);
   }
 
-  @Override public MixpanelAPI getUnderlyingInstance() {
+  @Override
+  public MixpanelAPI getUnderlyingInstance() {
     return mixpanel;
   }
 
-  void registerSuperProperties(Map<String, Object> in) {
+  private void registerSuperProperties(Map<String, Object> in) {
     if (isNullOrEmpty(in)) {
       return;
     }
@@ -148,7 +174,7 @@ public class MixpanelIntegration extends Integration<MixpanelAPI> {
     logger.verbose("mixpanel.registerSuperProperties(%s)", superProperties);
   }
 
-  void setPeopleProperties(Map<String, Object> in) {
+  private void setPeopleProperties(Map<String, Object> in) {
     if (isNullOrEmpty(in)) {
       return;
     }
@@ -170,7 +196,8 @@ public class MixpanelIntegration extends Integration<MixpanelAPI> {
     return out;
   }
 
-  @Override public void identify(IdentifyPayload identify) {
+  @Override
+  public void identify(IdentifyPayload identify) {
     super.identify(identify);
 
     String userId = identify.userId();
@@ -198,46 +225,58 @@ public class MixpanelIntegration extends Integration<MixpanelAPI> {
     setPeopleProperties(peoplePropertyTraits);
   }
 
-  @Override public void flush() {
+  @Override
+  public void flush() {
     super.flush();
     mixpanel.flush();
     logger.verbose("mixpanel.flush()");
   }
 
-  @Override public void reset() {
+  @Override
+  public void reset() {
     super.reset();
     mixpanel.reset();
     logger.verbose("mixpanel.reset()");
   }
 
-  @Override public void alias(AliasPayload alias) {
+  @Override
+  public void alias(AliasPayload alias) {
     super.alias(alias);
     String previousId = alias.previousId();
     if (previousId.equals(alias.anonymousId())) {
       // Instead of using our own anonymousId, we use Mixpanel's own generated Id.
       previousId = mixpanel.getDistinctId();
     }
-    mixpanel.alias(alias.userId(), previousId);
-    logger.verbose("mixpanel.alias(%s, %s)", alias.userId(), previousId);
+    String userId = alias.userId();
+    if (userId != null) {
+      mixpanel.alias(userId, previousId);
+      logger.verbose("mixpanel.alias(%s, %s)", userId, previousId);
+    }
   }
 
-  @Override public void screen(ScreenPayload screen) {
+  @Override
+  public void screen(ScreenPayload screen) {
     if (consolidatedPageCalls) {
-      Properties properties = screen.properties();
-      properties.put("name", screen.event());
+      Properties properties = new Properties();
+      properties.putAll(screen.properties());
+      properties.put("name", screen.name());
       event("Loaded a Screen", properties);
       return;
     }
+
     if (trackAllPages) {
       event(String.format(VIEWED_EVENT_FORMAT, screen.event()), screen.properties());
-    } else if (trackCategorizedPages && !isNullOrEmpty(screen.category())) {
+    } else //noinspection deprecation
+    if (trackCategorizedPages && !isNullOrEmpty(screen.category())) {
+      //noinspection deprecation
       event(String.format(VIEWED_EVENT_FORMAT, screen.category()), screen.properties());
     } else if (trackNamedPages && !isNullOrEmpty(screen.name())) {
       event(String.format(VIEWED_EVENT_FORMAT, screen.name()), screen.properties());
     }
   }
 
-  @Override public void track(TrackPayload track) {
+  @Override
+  public void track(TrackPayload track) {
     String event = track.event();
 
     event(event, track.properties());

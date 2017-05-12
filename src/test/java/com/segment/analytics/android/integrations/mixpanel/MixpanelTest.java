@@ -3,11 +3,13 @@ package com.segment.analytics.android.integrations.mixpanel;
 import android.app.Activity;
 import android.app.Application;
 import android.os.Bundle;
+import com.google.common.collect.ImmutableMap;
 import com.mixpanel.android.mpmetrics.MixpanelAPI;
 import com.segment.analytics.Analytics;
 import com.segment.analytics.Properties;
 import com.segment.analytics.Traits;
 import com.segment.analytics.ValueMap;
+import com.segment.analytics.integrations.IdentifyPayload;
 import com.segment.analytics.integrations.Logger;
 import com.segment.analytics.test.AliasPayloadBuilder;
 import com.segment.analytics.test.IdentifyPayloadBuilder;
@@ -28,12 +30,12 @@ import org.mockito.Mock;
 import org.powermock.core.classloader.annotations.PowerMockIgnore;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.rule.PowerMockRule;
-import org.robolectric.RobolectricGradleTestRunner;
+import org.robolectric.RobolectricTestRunner;
 import org.robolectric.annotation.Config;
 
 import static com.segment.analytics.Utils.createTraits;
 import static com.segment.analytics.android.integrations.mixpanel.MixpanelIntegration.filter;
-import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Java6Assertions.assertThat;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.argThat;
@@ -47,7 +49,7 @@ import static org.powermock.api.mockito.PowerMockito.verifyNoMoreInteractions;
 import static org.powermock.api.mockito.PowerMockito.verifyStatic;
 import static org.powermock.api.mockito.PowerMockito.when;
 
-@RunWith(RobolectricGradleTestRunner.class)
+@RunWith(RobolectricTestRunner.class)
 @Config(constants = BuildConfig.class, sdk = 18, manifest = Config.NONE)
 @PowerMockIgnore({ "org.mockito.*", "org.robolectric.*", "android.*", "org.json.*" })
 @PrepareForTest(MixpanelAPI.class) public class MixpanelTest {
@@ -287,18 +289,22 @@ import static org.powermock.api.mockito.PowerMockito.when;
     assertThat(integration.mixpanelPeople).isNull();
     assertThat(integration.isPeopleEnabled).isFalse();
 
-    Traits traits = createTraits("foo");
-    integration.identify(new IdentifyPayloadBuilder().traits(traits).build());
-    verify(mixpanel).identify("foo");
-    verify(mixpanel).registerSuperProperties(jsonEq(traits.toJsonObject()));
+    integration.identify(new IdentifyPayload.Builder()
+        .userId("prateek")
+        .traits(new Traits().putAge(25))
+        .build());
+    verify(mixpanel).identify("prateek");
+    verify(mixpanel).registerSuperProperties(jsonEq(new JSONObject(ImmutableMap.of("age", 25))));
     verifyNoMoreMixpanelInteractions();
   }
 
   @Test public void identifyWithoutUserId() {
-    Traits traits = createTraits();
-    integration.identify(new IdentifyPayloadBuilder().traits(traits).build());
+    integration.identify(new IdentifyPayload.Builder()
+        .anonymousId("anonymousId")
+        .traits(new Traits().putAge(25))
+        .build());
     verify(mixpanel, never()).identify(anyString());
-    verify(mixpanel).registerSuperProperties(jsonEq(traits.toJsonObject()));
+    verify(mixpanel).registerSuperProperties(jsonEq(new JSONObject(ImmutableMap.of("age", 25))));
     verifyNoMoreMixpanelInteractions();
   }
 
@@ -307,12 +313,16 @@ import static org.powermock.api.mockito.PowerMockito.when;
         .setMixpanelPeople(mixpanelPeople)
         .setIsPeopleEnabled(true)
         .createMixpanelIntegration();
-    Traits traits = createTraits("foo");
-    integration.identify(new IdentifyPayloadBuilder().traits(traits).build());
-    verify(mixpanel).identify("foo");
-    verify(mixpanel).registerSuperProperties(jsonEq(traits.toJsonObject()));
-    verify(mixpanelPeople).identify("foo");
-    verify(mixpanelPeople).set(jsonEq(traits.toJsonObject()));
+
+    integration.identify(new IdentifyPayload.Builder()
+        .traits(new Traits().putAge(25))
+        .userId("prateek")
+        .build());
+
+    verify(mixpanel).identify("prateek");
+    verify(mixpanel).registerSuperProperties(jsonEq(new JSONObject(ImmutableMap.of("age", 25))));
+    verify(mixpanelPeople).identify("prateek");
+    verify(mixpanelPeople).set(jsonEq(new JSONObject(ImmutableMap.of("age", 25))));
     verifyNoMoreMixpanelInteractions();
   }
 
@@ -322,13 +332,12 @@ import static org.powermock.api.mockito.PowerMockito.when;
         .setIsPeopleEnabled(true)
         .createMixpanelIntegration();
 
-    Traits traits = createTraits("foo").putEmail("friends@segment.com")
+    Traits traits = new Traits()
+        .putEmail("friends@segment.com")
         .putPhone("1-844-611-0621")
         .putCreatedAt("15th Feb, 2015")
         .putUsername("segmentio");
-    traits.remove("anonymousId");
     JSONObject expected = new JSONObject();
-    expected.put("userId", "foo");
     expected.put("$email", traits.email());
     expected.put("$phone", traits.phone());
     expected.put("$first_name", traits.firstName());
@@ -337,12 +346,13 @@ import static org.powermock.api.mockito.PowerMockito.when;
     expected.put("$username", traits.username());
     expected.put("$created", traits.createdAt());
 
-    integration.identify(new IdentifyPayloadBuilder(
-
-    ).traits(traits).build());
-    verify(mixpanel).identify("foo");
+    integration.identify(new IdentifyPayload.Builder()
+        .userId("prateek")
+        .traits(traits)
+        .build());
+    verify(mixpanel).identify("prateek");
     verify(mixpanel).registerSuperProperties(jsonEq(expected));
-    verify(mixpanelPeople).identify("foo");
+    verify(mixpanelPeople).identify("prateek");
     verify(mixpanelPeople).set(jsonEq(expected));
     verifyNoMoreMixpanelInteractions();
   }
