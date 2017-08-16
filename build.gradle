@@ -42,7 +42,7 @@ dependencies {
   compile 'com.segment.analytics.android:analytics:4.3.0-RC1'
   testCompile 'com.segment.analytics.android:analytics-tests:4.3.0-RC1'
 
-  compile 'com.mixpanel.android:mixpanel-android:4.9.8@aar'
+  compile 'com.mixpanel.android:mixpanel-android:5.1.4@aar'
 
   testCompile 'junit:junit:4.12'
 
