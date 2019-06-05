@@ -48,10 +48,10 @@ dependencies {
     google()
   }
 
-  api 'com.segment.analytics.android:analytics:4.3.0-RC1'
-  api 'com.mixpanel.android:mixpanel-android:5.2.1@aar'
+  api 'com.segment.analytics.android:analytics:4.3.1'
+  api 'com.mixpanel.android:mixpanel-android:5.6.2@aar'
 
-  testImplementation 'com.segment.analytics.android:analytics-tests:4.3.0-RC1'
+  testImplementation 'com.segment.analytics.android:analytics-tests:4.3.1'
   testImplementation 'junit:junit:4.12'
   testImplementation 'org.robolectric:robolectric:3.3.2'
   testImplementation 'org.assertj:assertj-core:1.7.1'
