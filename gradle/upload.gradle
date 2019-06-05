@@ -15,19 +15,6 @@
  */
 
 apply plugin: 'maven'
-apply plugin: 'signing'
-
-def isReleaseBuild() {
-  return VERSION_NAME.contains("SNAPSHOT") == false
-}
-
-def getRepositoryUsername() {
-  return hasProperty('NEXUS_USERNAME') ? NEXUS_USERNAME : ""
-}
-
-def getRepositoryPassword() {
-  return hasProperty('NEXUS_PASSWORD') ? NEXUS_PASSWORD : ""
-}
 
 afterEvaluate { project ->
   uploadArchives {
@@ -35,15 +22,18 @@ afterEvaluate { project ->
       mavenDeployer {
         beforeDeployment { MavenDeployment deployment -> signing.signPom(deployment) }
 
+        def userName = System.getenv("NEXUS_USERNAME")
+        def password = System.getenv("NEXUS_PASSWORD")
+
         pom.groupId = GROUP
         pom.artifactId = POM_ARTIFACT_ID
-        pom.version = VERSION_NAME
+        pom.version = isRelease ? VERSION.replace('-SNAPSHOT', '') : VERSION
 
         repository(url: "https://oss.sonatype.org/service/local/staging/deploy/maven2/") {
-          authentication(userName: getRepositoryUsername(), password: getRepositoryPassword())
+          authentication(userName: userName, password: password)
         }
         snapshotRepository(url: "https://oss.sonatype.org/content/repositories/snapshots/") {
-          authentication(userName: getRepositoryUsername(), password: getRepositoryPassword())
+          authentication(userName: userName, password: password)
         }
 
         pom.project {
@@ -77,10 +67,6 @@ afterEvaluate { project ->
     }
   }
 
-  signing {
-    required { isReleaseBuild() && gradle.taskGraph.hasTask("uploadArchives") }
-    sign configurations.archives
-  }
 
   task androidJavadocs(type: Javadoc) {
     source = android.sourceSets.main.java.srcDirs
