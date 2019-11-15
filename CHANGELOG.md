@@ -1,3 +1,10 @@
+Version 2.2.0 (15th November, 2019)
+==================================
+*(Supports Mixpanel 5.6.5)*
+
+  * Bumps Mixpanel version to 5.6.5
+  * Mixpanel version 5.6.5 fixes and updates [here](https://github.com/mixpanel/mixpanel-android/releases/tag/v5.6.5)
+
 Version 2.1.1 (12th September, 2019)
 ==================================
 *(Supports Mixpanel 5.6.3)*
