@@ -46,6 +46,9 @@ dependencies {
     jcenter()
     mavenCentral()
     google()
+    maven {
+      url 'https://oss.sonatype.org/content/repositories/snapshots/'
+    }
   }
 
   api 'com.segment.analytics.android:analytics:4.3.1'

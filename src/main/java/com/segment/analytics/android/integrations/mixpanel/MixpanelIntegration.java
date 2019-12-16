@@ -8,6 +8,7 @@ import com.segment.analytics.Properties;
 import com.segment.analytics.Traits;
 import com.segment.analytics.ValueMap;
 import com.segment.analytics.integrations.AliasPayload;
+import com.segment.analytics.integrations.GroupPayload;
 import com.segment.analytics.integrations.IdentifyPayload;
 import com.segment.analytics.integrations.Integration;
 import com.segment.analytics.integrations.Logger;
@@ -285,6 +286,25 @@ public class MixpanelIntegration extends Integration<MixpanelAPI> {
       mixpanelPeople.increment(event, 1);
       mixpanelPeople.set("Last " + event, new Date());
     }
+  }
+
+  @Override
+  public void group(GroupPayload group) {
+    Traits traits = group.traits();
+    String groupId = group.groupId();
+    String groupName = traits.name();
+
+    // set default groupName
+    if (isNullOrEmpty(groupName)) {
+      groupName = "[Segment] Group";
+    }
+    // set group traits
+    if (!isNullOrEmpty(traits)) {
+      mixpanel.getGroup(groupName,groupId).setOnce(traits.toJsonObject());
+    }
+    // set group
+    mixpanel.setGroup(groupName,groupId);
+    logger.verbose("mixpanel.setGroup(%s, %s)", groupName, groupId);
   }
 
   void event(String name, Properties properties) {
