@@ -9,6 +9,7 @@ import com.segment.analytics.Analytics;
 import com.segment.analytics.Properties;
 import com.segment.analytics.Traits;
 import com.segment.analytics.ValueMap;
+import com.segment.analytics.integrations.GroupPayload;
 import com.segment.analytics.integrations.IdentifyPayload;
 import com.segment.analytics.integrations.Logger;
 import com.segment.analytics.test.AliasPayloadBuilder;
@@ -40,6 +41,7 @@ import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.argThat;
 import static org.mockito.Matchers.eq;
+import static org.mockito.Matchers.refEq;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.MockitoAnnotations.initMocks;
@@ -57,11 +59,11 @@ import static org.powermock.api.mockito.PowerMockito.when;
   @Rule public PowerMockRule rule = new PowerMockRule();
   @Mock MixpanelAPI mixpanel;
   @Mock Application context;
-  Logger logger;
+  private Logger logger;
   @Mock MixpanelAPI.People mixpanelPeople;
+  @Mock MixpanelAPI.Group mixpanelGroup;
   @Mock Analytics analytics;
-
-  MixpanelIntegration integration;
+  private MixpanelIntegration integration;
 
   @Before public void setUp() {
     initMocks(this);
@@ -71,6 +73,7 @@ import static org.powermock.api.mockito.PowerMockito.when;
     when(mixpanel.getPeople()).thenReturn(mixpanelPeople);
     when(analytics.logger("Mixpanel")).thenReturn(logger);
     when(analytics.getApplication()).thenReturn(context);
+    when(mixpanel.getGroup(anyString(), anyString())).thenReturn(mixpanelGroup);
 
     integration =
         new MixpanelIntegrationBuilder().setMixpanel(mixpanel).createMixpanelIntegration();
@@ -397,6 +400,52 @@ import static org.powermock.api.mockito.PowerMockito.when;
     verify(mixpanelPeople).identify("foo");
     verifyNoMoreMixpanelInteractions();
   }
+
+
+  @Test public void group(){
+    Traits traits = createTraits();
+    integration.group(new GroupPayload.Builder()
+            .userId("foo")
+            .groupId("testGroupId")
+            .traits(traits)
+            .build());
+    // check mixpanel getGroup called with groupKey default "[Segment] Group" and groupID "testGroupId"
+    verify(mixpanel).getGroup("[Segment] Group", "testGroupId");
+
+    // verify to see that the same Traits passed in the integration
+    // transformed to a JsonObject are setOnce on the Group object
+    verify(mixpanelGroup).setOnce(refEq(traits.toJsonObject()));
+
+    // groupKey as default, since no name is set
+    // groupdId as integration
+    verify(mixpanel).setGroup("[Segment] Group","testGroupId");
+
+    // verify that no more interactions are being made
+    verifyNoMoreMixpanelInteractions();
+  }
+
+  @Test public void groupWithGroupName(){
+    Traits traits = createTraits().putName("someGroup");
+    integration.group(new GroupPayload.Builder()
+            .userId("foo")
+            .groupId("testGroupId")
+            .traits(traits)
+            .build());
+    // check mixpanel getGroup called with groupKey "someGroup" and groupID "testGroupId"
+    verify(mixpanel).getGroup("someGroup", "testGroupId");
+
+    // verify to see that the same Traits passed in the integration
+    // transformed to a JsonObject are setOnce on the Group object
+    verify(mixpanelGroup).setOnce(refEq(traits.toJsonObject()));
+
+    // check groupKey as integration
+    // check groupId as integration
+    verify(mixpanel).setGroup("someGroup","testGroupId");
+
+    // verify that no more interactions are being made
+    verifyNoMoreMixpanelInteractions();
+  }
+
 
   @Test public void testFilter() {
     Map<String, String> map = Collections.singletonMap("foo", "bar");
