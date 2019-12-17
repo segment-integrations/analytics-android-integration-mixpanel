@@ -2,6 +2,7 @@ package com.segment.analytics.android.integrations.mixpanel;
 
 import android.app.Activity;
 import android.app.Application;
+import android.os.Build;
 import android.os.Bundle;
 import com.google.common.collect.ImmutableMap;
 import com.mixpanel.android.mpmetrics.MixpanelAPI;
@@ -19,24 +20,25 @@ import com.segment.analytics.test.TrackPayloadBuilder;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Map;
-import org.hamcrest.Description;
-import org.hamcrest.TypeSafeMatcher;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mockito.ArgumentMatcher;
 import org.mockito.Mock;
 import org.powermock.core.classloader.annotations.PowerMockIgnore;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.rule.PowerMockRule;
 import org.robolectric.RobolectricTestRunner;
 import org.robolectric.annotation.Config;
+import org.skyscreamer.jsonassert.JSONAssert;
+import org.skyscreamer.jsonassert.JSONCompareMode;
 
 import static com.segment.analytics.Utils.createTraits;
 import static com.segment.analytics.android.integrations.mixpanel.MixpanelIntegration.filter;
-import static org.assertj.core.api.Java6Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.argThat;
@@ -48,18 +50,16 @@ import static org.mockito.MockitoAnnotations.initMocks;
 import static org.powermock.api.mockito.PowerMockito.mock;
 import static org.powermock.api.mockito.PowerMockito.mockStatic;
 import static org.powermock.api.mockito.PowerMockito.verifyNoMoreInteractions;
-import static org.powermock.api.mockito.PowerMockito.verifyStatic;
 import static org.powermock.api.mockito.PowerMockito.when;
 
 @RunWith(RobolectricTestRunner.class)
-@Config(constants = BuildConfig.class, sdk = 18, manifest = Config.NONE)
+@Config(sdk = Build.VERSION_CODES.P, manifest = Config.NONE)
 @PowerMockIgnore({ "org.mockito.*", "org.robolectric.*", "android.*", "org.json.*" })
 @PrepareForTest(MixpanelAPI.class) public class MixpanelTest {
 
   @Rule public PowerMockRule rule = new PowerMockRule();
   @Mock MixpanelAPI mixpanel;
   @Mock Application context;
-  private Logger logger;
   @Mock MixpanelAPI.People mixpanelPeople;
   @Mock MixpanelAPI.Group mixpanelGroup;
   @Mock Analytics analytics;
@@ -68,7 +68,7 @@ import static org.powermock.api.mockito.PowerMockito.when;
   @Before public void setUp() {
     initMocks(this);
     mockStatic(MixpanelAPI.class);
-    logger = Logger.with(Analytics.LogLevel.DEBUG);
+    Logger logger = Logger.with(Analytics.LogLevel.DEBUG);
     when(MixpanelAPI.getInstance(context, "foo")).thenReturn(mixpanel);
     when(mixpanel.getPeople()).thenReturn(mixpanelPeople);
     when(analytics.logger("Mixpanel")).thenReturn(logger);
@@ -89,7 +89,6 @@ import static org.powermock.api.mockito.PowerMockito.when;
     MixpanelIntegration integration =
         (MixpanelIntegration) MixpanelIntegration.FACTORY.create(settings, analytics);
 
-    verifyStatic();
     MixpanelAPI.getInstance(context, "foo");
     verify(mixpanel, never()).getPeople();
 
@@ -112,7 +111,6 @@ import static org.powermock.api.mockito.PowerMockito.when;
     MixpanelIntegration integration =
         (MixpanelIntegration) MixpanelIntegration.FACTORY.create(settings, analytics);
 
-    verifyStatic();
     MixpanelAPI.getInstance(context, "foo");
     verify(mixpanel).getPeople();
     assertThat(integration.token).isEqualTo("foo");
@@ -128,9 +126,8 @@ import static org.powermock.api.mockito.PowerMockito.when;
     Activity activity = mock(Activity.class);
     Bundle bundle = mock(Bundle.class);
     integration.onActivityCreated(activity, bundle);
-    verifyStatic();
     MixpanelAPI.getInstance(activity, "foo");
-    verifyNoMoreMixpanelInteractions();
+    verifyNoMoreInteractions(mixpanel);
   }
 
   @Test public void activityStart() {
@@ -503,24 +500,25 @@ import static org.powermock.api.mockito.PowerMockito.when;
     verifyNoMoreInteractions(mixpanelPeople);
   }
 
-  public static JSONObject jsonEq(JSONObject expected) {
-    return argThat(new JSONObjectMatcher(expected));
+  private JSONObject jsonEq(JSONObject expected) {
+    return argThat(new JSONMatcher(expected));
   }
 
-  private static class JSONObjectMatcher extends TypeSafeMatcher<JSONObject> {
-    private final JSONObject expected;
+  class JSONMatcher implements ArgumentMatcher<JSONObject> {
+    JSONObject expected;
 
-    private JSONObjectMatcher(JSONObject expected) {
+    JSONMatcher(JSONObject expected) {
       this.expected = expected;
     }
 
-    @Override public boolean matchesSafely(JSONObject jsonObject) {
-      // todo: this relies on having the same order
-      return expected.toString().equals(jsonObject.toString());
-    }
-
-    @Override public void describeTo(Description description) {
-      description.appendText(expected.toString());
+    @Override
+    public boolean matches(JSONObject argument) {
+      try {
+        JSONAssert.assertEquals(expected, argument, JSONCompareMode.STRICT);
+        return true;
+      } catch (JSONException e) {
+        return false;
+      }
     }
   }
 }
