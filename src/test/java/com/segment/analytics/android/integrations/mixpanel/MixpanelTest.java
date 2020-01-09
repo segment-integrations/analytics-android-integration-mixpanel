@@ -2,6 +2,7 @@ package com.segment.analytics.android.integrations.mixpanel;
 
 import android.app.Activity;
 import android.app.Application;
+import android.os.Build;
 import android.os.Bundle;
 import com.google.common.collect.ImmutableMap;
 import com.mixpanel.android.mpmetrics.MixpanelAPI;
@@ -9,6 +10,7 @@ import com.segment.analytics.Analytics;
 import com.segment.analytics.Properties;
 import com.segment.analytics.Traits;
 import com.segment.analytics.ValueMap;
+import com.segment.analytics.integrations.GroupPayload;
 import com.segment.analytics.integrations.IdentifyPayload;
 import com.segment.analytics.integrations.Logger;
 import com.segment.analytics.test.AliasPayloadBuilder;
@@ -18,59 +20,60 @@ import com.segment.analytics.test.TrackPayloadBuilder;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Map;
-import org.hamcrest.Description;
-import org.hamcrest.TypeSafeMatcher;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mockito.ArgumentMatcher;
 import org.mockito.Mock;
 import org.powermock.core.classloader.annotations.PowerMockIgnore;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.rule.PowerMockRule;
 import org.robolectric.RobolectricTestRunner;
 import org.robolectric.annotation.Config;
+import org.skyscreamer.jsonassert.JSONAssert;
+import org.skyscreamer.jsonassert.JSONCompareMode;
 
 import static com.segment.analytics.Utils.createTraits;
 import static com.segment.analytics.android.integrations.mixpanel.MixpanelIntegration.filter;
-import static org.assertj.core.api.Java6Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.argThat;
 import static org.mockito.Matchers.eq;
+import static org.mockito.Matchers.refEq;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.MockitoAnnotations.initMocks;
 import static org.powermock.api.mockito.PowerMockito.mock;
 import static org.powermock.api.mockito.PowerMockito.mockStatic;
 import static org.powermock.api.mockito.PowerMockito.verifyNoMoreInteractions;
-import static org.powermock.api.mockito.PowerMockito.verifyStatic;
 import static org.powermock.api.mockito.PowerMockito.when;
 
 @RunWith(RobolectricTestRunner.class)
-@Config(constants = BuildConfig.class, sdk = 18, manifest = Config.NONE)
+@Config(sdk = Build.VERSION_CODES.P, manifest = Config.NONE)
 @PowerMockIgnore({ "org.mockito.*", "org.robolectric.*", "android.*", "org.json.*" })
 @PrepareForTest(MixpanelAPI.class) public class MixpanelTest {
 
   @Rule public PowerMockRule rule = new PowerMockRule();
   @Mock MixpanelAPI mixpanel;
   @Mock Application context;
-  Logger logger;
   @Mock MixpanelAPI.People mixpanelPeople;
+  @Mock MixpanelAPI.Group mixpanelGroup;
   @Mock Analytics analytics;
-
-  MixpanelIntegration integration;
+  private MixpanelIntegration integration;
 
   @Before public void setUp() {
     initMocks(this);
     mockStatic(MixpanelAPI.class);
-    logger = Logger.with(Analytics.LogLevel.DEBUG);
+    Logger logger = Logger.with(Analytics.LogLevel.DEBUG);
     when(MixpanelAPI.getInstance(context, "foo")).thenReturn(mixpanel);
     when(mixpanel.getPeople()).thenReturn(mixpanelPeople);
     when(analytics.logger("Mixpanel")).thenReturn(logger);
     when(analytics.getApplication()).thenReturn(context);
+    when(mixpanel.getGroup(anyString(), anyString())).thenReturn(mixpanelGroup);
 
     integration =
         new MixpanelIntegrationBuilder().setMixpanel(mixpanel).createMixpanelIntegration();
@@ -86,7 +89,6 @@ import static org.powermock.api.mockito.PowerMockito.when;
     MixpanelIntegration integration =
         (MixpanelIntegration) MixpanelIntegration.FACTORY.create(settings, analytics);
 
-    verifyStatic();
     MixpanelAPI.getInstance(context, "foo");
     verify(mixpanel, never()).getPeople();
 
@@ -109,7 +111,6 @@ import static org.powermock.api.mockito.PowerMockito.when;
     MixpanelIntegration integration =
         (MixpanelIntegration) MixpanelIntegration.FACTORY.create(settings, analytics);
 
-    verifyStatic();
     MixpanelAPI.getInstance(context, "foo");
     verify(mixpanel).getPeople();
     assertThat(integration.token).isEqualTo("foo");
@@ -125,9 +126,8 @@ import static org.powermock.api.mockito.PowerMockito.when;
     Activity activity = mock(Activity.class);
     Bundle bundle = mock(Bundle.class);
     integration.onActivityCreated(activity, bundle);
-    verifyStatic();
     MixpanelAPI.getInstance(activity, "foo");
-    verifyNoMoreMixpanelInteractions();
+    verifyNoMoreInteractions(mixpanel);
   }
 
   @Test public void activityStart() {
@@ -398,6 +398,52 @@ import static org.powermock.api.mockito.PowerMockito.when;
     verifyNoMoreMixpanelInteractions();
   }
 
+
+  @Test public void group(){
+    Traits traits = createTraits();
+    integration.group(new GroupPayload.Builder()
+            .userId("foo")
+            .groupId("testGroupId")
+            .traits(traits)
+            .build());
+    // check mixpanel getGroup called with groupKey default "[Segment] Group" and groupID "testGroupId"
+    verify(mixpanel).getGroup("[Segment] Group", "testGroupId");
+
+    // verify to see that the same Traits passed in the integration
+    // transformed to a JsonObject are setOnce on the Group object
+    verify(mixpanelGroup).setOnce(refEq(traits.toJsonObject()));
+
+    // groupKey as default, since no name is set
+    // groupdId as integration
+    verify(mixpanel).setGroup("[Segment] Group","testGroupId");
+
+    // verify that no more interactions are being made
+    verifyNoMoreMixpanelInteractions();
+  }
+
+  @Test public void groupWithGroupName(){
+    Traits traits = createTraits().putName("someGroup");
+    integration.group(new GroupPayload.Builder()
+            .userId("foo")
+            .groupId("testGroupId")
+            .traits(traits)
+            .build());
+    // check mixpanel getGroup called with groupKey "someGroup" and groupID "testGroupId"
+    verify(mixpanel).getGroup("someGroup", "testGroupId");
+
+    // verify to see that the same Traits passed in the integration
+    // transformed to a JsonObject are setOnce on the Group object
+    verify(mixpanelGroup).setOnce(refEq(traits.toJsonObject()));
+
+    // check groupKey as integration
+    // check groupId as integration
+    verify(mixpanel).setGroup("someGroup","testGroupId");
+
+    // verify that no more interactions are being made
+    verifyNoMoreMixpanelInteractions();
+  }
+
+
   @Test public void testFilter() {
     Map<String, String> map = Collections.singletonMap("foo", "bar");
     assertThat(filter(map, Collections.<String>emptySet())).isEqualTo(Collections.emptyMap());
@@ -454,24 +500,25 @@ import static org.powermock.api.mockito.PowerMockito.when;
     verifyNoMoreInteractions(mixpanelPeople);
   }
 
-  public static JSONObject jsonEq(JSONObject expected) {
-    return argThat(new JSONObjectMatcher(expected));
+  private JSONObject jsonEq(JSONObject expected) {
+    return argThat(new JSONMatcher(expected));
   }
 
-  private static class JSONObjectMatcher extends TypeSafeMatcher<JSONObject> {
-    private final JSONObject expected;
+  class JSONMatcher implements ArgumentMatcher<JSONObject> {
+    JSONObject expected;
 
-    private JSONObjectMatcher(JSONObject expected) {
+    JSONMatcher(JSONObject expected) {
       this.expected = expected;
     }
 
-    @Override public boolean matchesSafely(JSONObject jsonObject) {
-      // todo: this relies on having the same order
-      return expected.toString().equals(jsonObject.toString());
-    }
-
-    @Override public void describeTo(Description description) {
-      description.appendText(expected.toString());
+    @Override
+    public boolean matches(JSONObject argument) {
+      try {
+        JSONAssert.assertEquals(expected, argument, JSONCompareMode.STRICT);
+        return true;
+      } catch (JSONException e) {
+        return false;
+      }
     }
   }
 }
