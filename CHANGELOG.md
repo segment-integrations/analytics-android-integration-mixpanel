@@ -1,3 +1,10 @@
+Version 2.3.0 (10th January, 2020)
+==================================
+*(Supports Mixpanel 5.6.7)*
+
+  * Bumps Mixpanel version to 5.6.7.
+  * Maps Segment `group` events to Mixpanel `setGroup` method.
+
 Version 2.2.0 (15th November, 2019)
 ==================================
 *(Supports Mixpanel 5.6.5)*
