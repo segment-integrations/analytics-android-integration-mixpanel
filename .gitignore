@@ -148,4 +148,5 @@ Temporary Items
 build/
 
 # Ignore Gradle GUI config
-gradle-app.setting
+.classpath
+.project
