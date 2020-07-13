@@ -7,9 +7,8 @@ buildscript {
   }
 
   dependencies {
-    classpath 'com.android.tools.build:gradle:3.4.1'
-    classpath 'com.f2prateek.javafmt:javafmt:0.1.6'
-    classpath 'io.codearte.gradle.nexus:gradle-nexus-staging-plugin:0.11.0'
+    classpath 'com.android.tools.build:gradle:3.6.3'
+    classpath 'io.codearte.gradle.nexus:gradle-nexus-staging-plugin:0.21.2'
   }
 }
 
@@ -17,14 +16,13 @@ buildscript {
 ext.isRelease = hasProperty('release')
 
 apply plugin: 'com.android.library'
-apply plugin: 'com.f2prateek.javafmt'
 
 android {
-  compileSdkVersion 28
+  compileSdkVersion 29
 
   defaultConfig {
     minSdkVersion 16
-    targetSdkVersion 28
+    targetSdkVersion 29
   }
 
   compileOptions {
@@ -51,20 +49,20 @@ dependencies {
     google()
   }
 
-  api 'com.segment.analytics.android:analytics:4.3.1'
-  api 'com.mixpanel.android:mixpanel-android:5.6.7'
+  api 'com.segment.analytics.android:analytics:4.5.0'
+  api 'com.mixpanel.android:mixpanel-android:5.8.3'
 
-  testImplementation 'com.segment.analytics.android:analytics-tests:4.3.1'
-  testImplementation 'junit:junit:4.12'
+  testImplementation 'com.segment.analytics.android:analytics-tests:4.5.0'
+  testImplementation 'junit:junit:4.13'
   testImplementation 'org.robolectric:robolectric:4.3.1'
   testImplementation 'org.skyscreamer:jsonassert:1.5.0'
-  testImplementation 'org.assertj:assertj-core:1.7.1'
-  testImplementation 'org.mockito:mockito-core:3.1.0'
-  testImplementation 'org.powermock:powermock:1.6.2'
-  testImplementation 'org.powermock:powermock-module-junit4:2.0.4'
-  testImplementation 'org.powermock:powermock-module-junit4-rule:2.0.4'
-  testImplementation 'org.powermock:powermock-api-mockito2:2.0.4'
-  testImplementation 'org.powermock:powermock-classloading-xstream:2.0.4'
+  testImplementation 'org.assertj:assertj-core:3.16.1'
+  testImplementation 'org.mockito:mockito-core:3.3.3'
+  testImplementation 'org.powermock:powermock:1.6.6'
+  testImplementation 'org.powermock:powermock-module-junit4:2.0.7'
+  testImplementation 'org.powermock:powermock-module-junit4-rule:2.0.7'
+  testImplementation 'org.powermock:powermock-api-mockito2:2.0.7'
+  testImplementation 'org.powermock:powermock-classloading-xstream:2.0.7'
 }
 
 
