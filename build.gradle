@@ -52,9 +52,9 @@ dependencies {
   }
 
   api 'com.segment.analytics.android:analytics:4.9.3'
-  api 'com.mixpanel.android:mixpanel-android:5.8.8'
+  api 'com.mixpanel.android:mixpanel-android:5.8.7'
 
-  testImplementation 'com.segment.analytics.android:analytics-tests:4.9.3'
+  testImplementation 'com.segment.analytics.android:analytics-tests:4.3.1'
   testImplementation 'junit:junit:4.12'
   testImplementation 'org.robolectric:robolectric:4.3.1'
   testImplementation 'org.skyscreamer:jsonassert:1.5.0'
