@@ -51,8 +51,8 @@ dependencies {
     google()
   }
 
-  api 'com.segment.analytics.android:analytics:4.3.1'
-  api 'com.mixpanel.android:mixpanel-android:5.6.7'
+  api 'com.segment.analytics.android:analytics:4.9.3'
+  api 'com.mixpanel.android:mixpanel-android:5.8.7'
 
   testImplementation 'com.segment.analytics.android:analytics-tests:4.3.1'
   testImplementation 'junit:junit:4.12'
