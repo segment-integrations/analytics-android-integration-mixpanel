@@ -1,3 +1,10 @@
+Version 2.3.1 (5th May, 2021)
+==================================
+*(Supports Mixpanel 5.8.7)*
+
+  * Bumps Mixpanel version to 5.8.7
+  * Bumps analytics-android to 4.9.3
+
 Version 2.3.0 (10th January, 2020)
 ==================================
 *(Supports Mixpanel 5.6.7)*
