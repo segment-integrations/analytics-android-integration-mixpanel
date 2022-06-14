@@ -1,3 +1,9 @@
+Version 3.2.2 (14th June, 2022)
+==================================
+*(Supports Mixpanel 5.8.7)*
+
+  * Address google policy violation by updating to the latest android-analytics 
+
 Version 2.3.1 (5th May, 2021)
 ==================================
 *(Supports Mixpanel 5.8.7)*
