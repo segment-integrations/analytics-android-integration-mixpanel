@@ -44,13 +44,14 @@ android {
 }
 
 dependencies {
+  testImplementation project(path: ':')
   repositories {
     mavenCentral()
     google()
   }
 
   api 'com.segment.analytics.android:analytics:4.10.4'
-  api 'com.mixpanel.android:mixpanel-android:5.8.7'
+  api 'com.mixpanel.android:mixpanel-android:7.0.1'
 
   testImplementation 'com.segment.analytics.android:analytics-tests:4.3.1'
   testImplementation 'junit:junit:4.13.2'

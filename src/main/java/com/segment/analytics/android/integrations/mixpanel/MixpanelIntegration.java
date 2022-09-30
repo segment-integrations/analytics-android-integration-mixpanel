@@ -44,7 +44,7 @@ public class MixpanelIntegration extends Integration<MixpanelAPI> {
           Set<String> superProperties = getStringSet(settings, "superProperties");
 
           Logger logger = analytics.logger(MIXPANEL_KEY);
-          MixpanelAPI mixpanel = MixpanelAPI.getInstance(analytics.getApplication(), token);
+          MixpanelAPI mixpanel = MixpanelAPI.getInstance(analytics.getApplication(), token, false);
           logger.verbose("MixpanelAPI.getInstance(context, %s);", token);
 
           MixpanelAPI.People people;
@@ -158,7 +158,7 @@ public class MixpanelIntegration extends Integration<MixpanelAPI> {
     // This is needed to trigger a call to #checkIntentForInboundAppLink.
     // From Mixpanel's source, this won't trigger a creation of another instance. It caches
     // instances by the application context and token, both of which remain the same.
-    MixpanelAPI.getInstance(activity, token);
+    MixpanelAPI.getInstance(activity, token, false);
   }
 
   @Override
