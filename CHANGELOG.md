@@ -1,3 +1,9 @@
+Version 3.2.3 (30th September, 2022)
+==================================
+*(Supports Mixpanel 7.0.1)*
+
+* Bumps Mixpanel version to 7.0.1
+
 Version 3.2.2 (14th June, 2022)
 ==================================
 *(Supports Mixpanel 5.8.7)*
