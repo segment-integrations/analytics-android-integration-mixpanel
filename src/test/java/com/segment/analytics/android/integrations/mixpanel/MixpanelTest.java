@@ -69,7 +69,7 @@ import static org.powermock.api.mockito.PowerMockito.when;
     initMocks(this);
     mockStatic(MixpanelAPI.class);
     Logger logger = Logger.with(Analytics.LogLevel.DEBUG);
-    when(MixpanelAPI.getInstance(context, "foo")).thenReturn(mixpanel);
+    when(MixpanelAPI.getInstance(context, "foo", false)).thenReturn(mixpanel);
     when(mixpanel.getPeople()).thenReturn(mixpanelPeople);
     when(analytics.logger("Mixpanel")).thenReturn(logger);
     when(analytics.getApplication()).thenReturn(context);
@@ -89,7 +89,7 @@ import static org.powermock.api.mockito.PowerMockito.when;
     MixpanelIntegration integration =
         (MixpanelIntegration) MixpanelIntegration.FACTORY.create(settings, analytics);
 
-    MixpanelAPI.getInstance(context, "foo");
+    MixpanelAPI.getInstance(context, "foo", false);
     verify(mixpanel, never()).getPeople();
 
     assertThat(integration.token).isEqualTo("foo");
@@ -111,7 +111,7 @@ import static org.powermock.api.mockito.PowerMockito.when;
     MixpanelIntegration integration =
         (MixpanelIntegration) MixpanelIntegration.FACTORY.create(settings, analytics);
 
-    MixpanelAPI.getInstance(context, "foo");
+    MixpanelAPI.getInstance(context, "foo", false);
     verify(mixpanel).getPeople();
     assertThat(integration.token).isEqualTo("foo");
     assertThat(integration.trackAllPages).isTrue();
@@ -126,7 +126,7 @@ import static org.powermock.api.mockito.PowerMockito.when;
     Activity activity = mock(Activity.class);
     Bundle bundle = mock(Bundle.class);
     integration.onActivityCreated(activity, bundle);
-    MixpanelAPI.getInstance(activity, "foo");
+    MixpanelAPI.getInstance(activity, "foo", false);
     verifyNoMoreInteractions(mixpanel);
   }
 
